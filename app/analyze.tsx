@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { ScrollView, Text, View, Pressable, ActivityIndicator, Alert, Share, StyleSheet } from "react-native";
-import { ScreenContainer } from "@/components/screen-container";
+import { GlassScreen, GlassCard } from "@/components/glass-screen";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
@@ -49,7 +49,7 @@ export default function AnalyzeScreen() {
   }, [analysis]);
 
   return (
-    <ScreenContainer edges={["top", "bottom", "left", "right"]}>
+    <GlassScreen screenName="detail" edges={["top", "bottom", "left", "right"]}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
           <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
@@ -120,7 +120,7 @@ export default function AnalyzeScreen() {
           </View>
         )}
       </ScrollView>
-    </ScreenContainer>
+    </GlassScreen>
   );
 }
 

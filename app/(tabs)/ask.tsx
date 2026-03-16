@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { Text, View, TextInput, Pressable, ActivityIndicator, FlatList, KeyboardAvoidingView, Platform } from "react-native";
-import { ScreenContainer } from "@/components/screen-container";
+import { GlassScreen, GlassCard } from "@/components/glass-screen";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/hooks/use-auth";
@@ -82,15 +83,15 @@ export default function AskScreen() {
 
   if (!isLoggedIn) {
     return (
-      <ScreenContainer className="flex-1 items-center justify-center p-6">
+      <GlassScreen screenName="ask" className="flex-1 items-center justify-center p-6">
         <IconSymbol name="sparkles" size={48} color={colors.muted} />
         <Text className="text-lg text-muted mt-4 text-center">Sign in to use AI features</Text>
-      </ScreenContainer>
+      </GlassScreen>
     );
   }
 
   return (
-    <ScreenContainer>
+    <GlassScreen screenName="ask">
       <View className="px-5 pt-4 pb-2">
         <Text className="text-2xl font-bold text-foreground">AI Assistant</Text>
       </View>
@@ -301,7 +302,7 @@ export default function AskScreen() {
           />
         </View>
       )}
-    </ScreenContainer>
+    </GlassScreen>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { ScrollView, Text, View, TextInput, Pressable, ActivityIndicator, Alert, Platform, StyleSheet } from "react-native";
-import { ScreenContainer } from "@/components/screen-container";
+import { GlassScreen, GlassCard } from "@/components/glass-screen";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/hooks/use-auth";
@@ -25,9 +26,13 @@ const MODES: { key: CaptureMode; label: string; icon: any; proOnly?: boolean }[]
 
 export default function CaptureScreen() {
   const colors = useColors();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { isGuest, canUseFeature, subscription } = useAppState();
+  const cardBg = isDark ? "rgba(20,35,28,0.55)" : "rgba(255,255,255,0.45)";
+  const cardBorder = isDark ? "rgba(0,201,167,0.15)" : "rgba(0,201,167,0.2)";
   const [mode, setMode] = useState<CaptureMode>("text");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -203,16 +208,16 @@ export default function CaptureScreen() {
 
   if (!isLoggedIn) {
     return (
-      <ScreenContainer className="flex-1 items-center justify-center p-6">
+      <GlassScreen screenName="capture" className="flex-1 items-center justify-center p-6">
         <IconSymbol name="plus.circle.fill" size={48} color={colors.muted} />
         <Text className="text-lg text-muted mt-4 text-center">Sign in to start capturing memories</Text>
-      </ScreenContainer>
+      </GlassScreen>
     );
   }
 
   if (saved) {
     return (
-      <ScreenContainer className="flex-1 items-center justify-center p-6">
+      <GlassScreen screenName="capture" className="flex-1 items-center justify-center p-6">
         <View style={styles.savedContainer}>
           <IconSymbol name="checkmark.circle.fill" size={64} color={colors.success} />
           <Text style={[styles.savedTitle, { color: colors.foreground }]}>Saved!</Text>
@@ -230,12 +235,12 @@ export default function CaptureScreen() {
             <Text style={{ color: colors.primary, fontWeight: "600" }}>Capture Another</Text>
           </Pressable>
         </View>
-      </ScreenContainer>
+      </GlassScreen>
     );
   }
 
   return (
-    <ScreenContainer>
+    <GlassScreen screenName="capture">
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
         <View className="px-5 pt-4 pb-2">
           <Text className="text-2xl font-bold text-foreground">Capture</Text>
@@ -476,7 +481,7 @@ export default function CaptureScreen() {
           </Pressable>
         </View>
       </ScrollView>
-    </ScreenContainer>
+    </GlassScreen>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { ScrollView, Text, View, Pressable, ActivityIndicator, RefreshControl } from "react-native";
-import { ScreenContainer } from "@/components/screen-container";
+import { GlassScreen, GlassCard } from "@/components/glass-screen";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/hooks/use-auth";
@@ -33,10 +34,10 @@ export default function InsightsScreen() {
 
   if (!isLoggedIn) {
     return (
-      <ScreenContainer className="flex-1 items-center justify-center p-6">
+      <GlassScreen screenName="insights" className="flex-1 items-center justify-center p-6">
         <IconSymbol name="chart.bar.fill" size={48} color={colors.muted} />
         <Text className="text-lg text-muted mt-4 text-center">Sign in to view insights</Text>
-      </ScreenContainer>
+      </GlassScreen>
     );
   }
 
@@ -45,7 +46,7 @@ export default function InsightsScreen() {
   const graph = graphQuery.data;
 
   return (
-    <ScreenContainer>
+    <GlassScreen screenName="insights">
       <View className="px-5 pt-4 pb-2">
         <Text className="text-2xl font-bold text-foreground">Insights</Text>
       </View>
@@ -253,7 +254,7 @@ export default function InsightsScreen() {
           )}
         </View>
       )}
-    </ScreenContainer>
+    </GlassScreen>
   );
 }
 

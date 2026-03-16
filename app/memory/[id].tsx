@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { ScrollView, Text, View, Pressable, ActivityIndicator, Alert, Share, StyleSheet } from "react-native";
-import { ScreenContainer } from "@/components/screen-container";
+import { GlassScreen, GlassCard } from "@/components/glass-screen";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
@@ -133,21 +133,21 @@ export default function MemoryDetailScreen() {
 
   if (memoryQuery.isLoading) {
     return (
-      <ScreenContainer edges={["top", "bottom", "left", "right"]} className="flex-1 items-center justify-center">
+      <GlassScreen screenName="detail" edges={["top", "bottom", "left", "right"]} className="flex-1 items-center justify-center">
         <ActivityIndicator size="large" color={colors.primary} />
-      </ScreenContainer>
+      </GlassScreen>
     );
   }
 
   const memory = memoryQuery.data;
   if (!memory) {
     return (
-      <ScreenContainer edges={["top", "bottom", "left", "right"]} className="flex-1 items-center justify-center p-6">
+      <GlassScreen screenName="detail" edges={["top", "bottom", "left", "right"]} className="flex-1 items-center justify-center p-6">
         <Text className="text-lg text-muted">Memory not found</Text>
         <Pressable onPress={() => router.back()} style={({ pressed }) => [pressed && { opacity: 0.7 }]}>
           <Text style={{ color: colors.primary, marginTop: 12, fontWeight: "600" }}>Go Back</Text>
         </Pressable>
-      </ScreenContainer>
+      </GlassScreen>
     );
   }
 
@@ -157,7 +157,7 @@ export default function MemoryDetailScreen() {
   });
 
   return (
-    <ScreenContainer edges={["top", "bottom", "left", "right"]}>
+    <GlassScreen screenName="detail" edges={["top", "bottom", "left", "right"]}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
           <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
@@ -297,7 +297,7 @@ export default function MemoryDetailScreen() {
           </View>
         )}
       </ScrollView>
-    </ScreenContainer>
+    </GlassScreen>
   );
 }
 

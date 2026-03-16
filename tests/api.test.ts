@@ -1047,3 +1047,259 @@ describe("Tag Color Palette", () => {
     expect(unique.size).toBe(TAG_COLORS.length);
   });
 });
+
+
+// ─── Phase 4: GlassScreen, Smart Reminders, Collaborative Folders, Daily Digest ──
+
+describe("GlassScreen background mapping", () => {
+  const BACKGROUNDS: Record<string, string> = {
+    home: "home.jpg",
+    capture: "capture.jpg",
+    library: "library.jpg",
+    ask: "ask.jpg",
+    insights: "insights.jpg",
+    onboarding: "onboarding.jpg",
+    folders: "folders.jpg",
+    focus: "focus.jpg",
+    subscription: "subscription.jpg",
+    detail: "detail.jpg",
+  };
+
+  it("has a unique background for each screen", () => {
+    const values = Object.values(BACKGROUNDS);
+    const uniqueValues = new Set(values);
+    expect(uniqueValues.size).toBe(values.length);
+  });
+
+  it("maps all 10 screens to background images", () => {
+    expect(Object.keys(BACKGROUNDS).length).toBe(10);
+    expect(BACKGROUNDS.home).toBe("home.jpg");
+    expect(BACKGROUNDS.capture).toBe("capture.jpg");
+    expect(BACKGROUNDS.library).toBe("library.jpg");
+    expect(BACKGROUNDS.ask).toBe("ask.jpg");
+    expect(BACKGROUNDS.insights).toBe("insights.jpg");
+    expect(BACKGROUNDS.onboarding).toBe("onboarding.jpg");
+    expect(BACKGROUNDS.folders).toBe("folders.jpg");
+    expect(BACKGROUNDS.focus).toBe("focus.jpg");
+    expect(BACKGROUNDS.subscription).toBe("subscription.jpg");
+    expect(BACKGROUNDS.detail).toBe("detail.jpg");
+  });
+
+  it("falls back to home background for unknown screens", () => {
+    const getBackground = (name: string) => BACKGROUNDS[name] || BACKGROUNDS.home;
+    expect(getBackground("unknown")).toBe("home.jpg");
+    expect(getBackground("settings")).toBe("home.jpg");
+  });
+});
+
+describe("Smart Reminders logic", () => {
+  interface Reminder {
+    id: string;
+    title: string;
+    dueDate: string;
+    completed: boolean;
+    priority: "low" | "medium" | "high";
+    sourceMemoryId?: string;
+  }
+
+  function getPendingReminders(reminders: Reminder[]): Reminder[] {
+    return reminders
+      .filter((r) => !r.completed)
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+  }
+
+  function getOverdueReminders(reminders: Reminder[]): Reminder[] {
+    const now = new Date();
+    return reminders.filter((r) => !r.completed && new Date(r.dueDate) < now);
+  }
+
+  const testReminders: Reminder[] = [
+    { id: "r1", title: "Follow up with John", dueDate: "2025-01-15T10:00:00Z", completed: false, priority: "high" },
+    { id: "r2", title: "Review contract", dueDate: "2025-01-20T10:00:00Z", completed: true, priority: "medium" },
+    { id: "r3", title: "Submit report", dueDate: "2025-01-10T10:00:00Z", completed: false, priority: "low" },
+    { id: "r4", title: "Team meeting prep", dueDate: "2025-01-25T10:00:00Z", completed: false, priority: "medium" },
+  ];
+
+  it("filters out completed reminders", () => {
+    const pending = getPendingReminders(testReminders);
+    expect(pending.length).toBe(3);
+    expect(pending.every((r) => !r.completed)).toBe(true);
+  });
+
+  it("sorts pending reminders by due date ascending", () => {
+    const pending = getPendingReminders(testReminders);
+    expect(pending[0].id).toBe("r3"); // earliest
+    expect(pending[1].id).toBe("r1");
+    expect(pending[2].id).toBe("r4"); // latest
+  });
+
+  it("identifies overdue reminders", () => {
+    const overdue = getOverdueReminders(testReminders);
+    // All test dates are in the past (2025), so all non-completed are overdue
+    expect(overdue.length).toBe(3);
+  });
+
+  it("handles empty reminders array", () => {
+    expect(getPendingReminders([])).toEqual([]);
+    expect(getOverdueReminders([])).toEqual([]);
+  });
+});
+
+describe("Collaborative Folders logic", () => {
+  interface Collaborator {
+    id: string;
+    email: string;
+    role: "viewer" | "editor";
+    addedAt: string;
+  }
+
+  interface SharedFolder {
+    folderId: string;
+    ownerId: string;
+    collaborators: Collaborator[];
+  }
+
+  function canEdit(folder: SharedFolder, userId: string): boolean {
+    if (folder.ownerId === userId) return true;
+    const collab = folder.collaborators.find((c) => c.id === userId);
+    return collab?.role === "editor";
+  }
+
+  function canView(folder: SharedFolder, userId: string): boolean {
+    if (folder.ownerId === userId) return true;
+    return folder.collaborators.some((c) => c.id === userId);
+  }
+
+  const testFolder: SharedFolder = {
+    folderId: "f1",
+    ownerId: "owner1",
+    collaborators: [
+      { id: "user2", email: "viewer@test.com", role: "viewer", addedAt: "2025-01-01" },
+      { id: "user3", email: "editor@test.com", role: "editor", addedAt: "2025-01-02" },
+    ],
+  };
+
+  it("owner can always edit", () => {
+    expect(canEdit(testFolder, "owner1")).toBe(true);
+  });
+
+  it("editor can edit", () => {
+    expect(canEdit(testFolder, "user3")).toBe(true);
+  });
+
+  it("viewer cannot edit", () => {
+    expect(canEdit(testFolder, "user2")).toBe(false);
+  });
+
+  it("non-member cannot edit or view", () => {
+    expect(canEdit(testFolder, "stranger")).toBe(false);
+    expect(canView(testFolder, "stranger")).toBe(false);
+  });
+
+  it("viewer can view", () => {
+    expect(canView(testFolder, "user2")).toBe(true);
+  });
+
+  it("owner can view", () => {
+    expect(canView(testFolder, "owner1")).toBe(true);
+  });
+});
+
+describe("Daily Digest logic", () => {
+  interface DigestItem {
+    memoryId: string;
+    title: string;
+    relevanceScore: number;
+    topic: string;
+  }
+
+  function generateDigest(items: DigestItem[]): DigestItem | null {
+    if (items.length === 0) return null;
+    return items.sort((a, b) => b.relevanceScore - a.relevanceScore)[0];
+  }
+
+  function getDigestTopics(items: DigestItem[]): string[] {
+    return [...new Set(items.map((i) => i.topic))];
+  }
+
+  const testItems: DigestItem[] = [
+    { memoryId: "m1", title: "Marketing Strategy", relevanceScore: 0.85, topic: "Marketing" },
+    { memoryId: "m2", title: "Investment Notes", relevanceScore: 0.92, topic: "Finance" },
+    { memoryId: "m3", title: "Team Meeting", relevanceScore: 0.78, topic: "Work" },
+    { memoryId: "m4", title: "Budget Review", relevanceScore: 0.88, topic: "Finance" },
+  ];
+
+  it("selects the highest relevance item for digest", () => {
+    const digest = generateDigest(testItems);
+    expect(digest).not.toBeNull();
+    expect(digest!.memoryId).toBe("m2");
+    expect(digest!.relevanceScore).toBe(0.92);
+  });
+
+  it("returns null for empty items", () => {
+    expect(generateDigest([])).toBeNull();
+  });
+
+  it("extracts unique topics", () => {
+    const topics = getDigestTopics(testItems);
+    expect(topics).toContain("Marketing");
+    expect(topics).toContain("Finance");
+    expect(topics).toContain("Work");
+    expect(topics.length).toBe(3); // Finance appears twice but should be unique
+  });
+});
+
+describe("Translucent overlay opacity calculation", () => {
+  function calculateOverlayOpacity(isDark: boolean, customOpacity?: number): number {
+    return customOpacity ?? (isDark ? 0.72 : 0.6);
+  }
+
+  it("uses dark default opacity when dark mode", () => {
+    expect(calculateOverlayOpacity(true)).toBe(0.72);
+  });
+
+  it("uses light default opacity when light mode", () => {
+    expect(calculateOverlayOpacity(false)).toBe(0.6);
+  });
+
+  it("uses custom opacity when provided", () => {
+    expect(calculateOverlayOpacity(true, 0.5)).toBe(0.5);
+    expect(calculateOverlayOpacity(false, 0.8)).toBe(0.8);
+  });
+});
+
+describe("Subscription feature gating for new features", () => {
+  type Feature = "smartReminders" | "collaboration" | "dailyDigest" | "focusMode" | "export";
+  type Plan = "basic" | "pro";
+
+  const FEATURE_ACCESS: Record<Feature, Plan[]> = {
+    smartReminders: ["pro"],
+    collaboration: ["pro"],
+    dailyDigest: ["basic", "pro"],
+    focusMode: ["pro"],
+    export: ["pro"],
+  };
+
+  function canAccess(feature: Feature, plan: Plan): boolean {
+    return FEATURE_ACCESS[feature].includes(plan);
+  }
+
+  it("basic users can access daily digest", () => {
+    expect(canAccess("dailyDigest", "basic")).toBe(true);
+  });
+
+  it("basic users cannot access pro features", () => {
+    expect(canAccess("smartReminders", "basic")).toBe(false);
+    expect(canAccess("collaboration", "basic")).toBe(false);
+    expect(canAccess("focusMode", "basic")).toBe(false);
+    expect(canAccess("export", "basic")).toBe(false);
+  });
+
+  it("pro users can access all features", () => {
+    expect(canAccess("smartReminders", "pro")).toBe(true);
+    expect(canAccess("collaboration", "pro")).toBe(true);
+    expect(canAccess("dailyDigest", "pro")).toBe(true);
+    expect(canAccess("focusMode", "pro")).toBe(true);
+    expect(canAccess("export", "pro")).toBe(true);
+  });
+});

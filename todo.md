@@ -61,3 +61,25 @@
 - [x] Aurora green + gold accent theme redesign
 - [x] Custom backgrounds for each page (thinking/brain/AI concept)
 - [x] NanoBanana image-based slides for UI showcase
+
+## Phase 4 - Translucent UI, Enhanced Onboarding, Smart Features
+
+- [x] Copy NanoBanana HD images into app assets for backgrounds
+- [x] Build translucent background component with blur overlay
+- [x] Apply translucent backgrounds to Home screen
+- [x] Apply translucent backgrounds to Capture screen
+- [x] Apply translucent backgrounds to Library screen
+- [x] Apply translucent backgrounds to Ask AI screen
+- [x] Apply translucent backgrounds to Insights screen
+- [x] Apply translucent backgrounds to Onboarding screen
+- [x] Apply translucent backgrounds to all modal/detail screens
+- [x] Revamp onboarding with subscription upsell step
+- [x] Enhanced tutorial tips for first-time users on all screens
+- [x] User guide button at top-right corner on all screens
+- [x] Smart reminders - AI detects action items in notes
+- [x] Smart reminders - auto-create reminder notifications
+- [x] Collaborative folders - share folders with others
+- [x] Collaborative folders - role-based access (viewer/editor)
+- [x] Daily Digest home widget - surface relevant memory each morning
+- [x] Daily Digest - based on user's recent focus areas
+- [x] Unit tests for all new features (95 tests passing)

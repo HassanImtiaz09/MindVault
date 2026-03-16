@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { View, Text, Pressable, StyleSheet, Alert, Platform } from "react-native";
-import { ScreenContainer } from "@/components/screen-container";
+import { GlassScreen, GlassCard } from "@/components/glass-screen";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useAppState } from "@/lib/app-state";
@@ -114,7 +114,7 @@ export default function FocusScreen() {
   const captured = activeFocusSession?.capturedMemoryIds.length ?? 0;
 
   return (
-    <ScreenContainer edges={["top", "bottom", "left", "right"]}>
+    <GlassScreen screenName="focus" edges={["top", "bottom", "left", "right"]}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
           <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
@@ -281,7 +281,7 @@ export default function FocusScreen() {
           </View>
         )}
       </View>
-    </ScreenContainer>
+    </GlassScreen>
   );
 }
 

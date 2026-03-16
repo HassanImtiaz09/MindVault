@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { ScrollView, Text, View, Pressable, TextInput, Alert, StyleSheet, ActivityIndicator } from "react-native";
-import { ScreenContainer } from "@/components/screen-container";
+import { GlassScreen, GlassCard } from "@/components/glass-screen";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useAppState } from "@/lib/app-state";
@@ -89,7 +89,7 @@ export default function FoldersScreen() {
   }, [folders]);
 
   return (
-    <ScreenContainer edges={["top", "bottom", "left", "right"]}>
+    <GlassScreen screenName="folders" edges={["top", "bottom", "left", "right"]}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
           <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
@@ -189,7 +189,7 @@ export default function FoldersScreen() {
           </View>
         )}
       </ScrollView>
-    </ScreenContainer>
+    </GlassScreen>
   );
 }
 

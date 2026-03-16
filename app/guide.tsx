@@ -1,5 +1,6 @@
 import { ScrollView, Text, View, Pressable, StyleSheet } from "react-native";
-import { ScreenContainer } from "@/components/screen-container";
+import { GlassScreen, GlassCard } from "@/components/glass-screen";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useRouter } from "expo-router";
@@ -124,6 +125,53 @@ const GUIDE_SECTIONS: GuideSection[] = [
       "Pro users can generate formatted reports for professional sharing.",
     ],
   },
+  {
+    icon: "bell.fill",
+    iconColor: "#D4A017",
+    title: "Smart Reminders",
+    content: [
+      "AI automatically detects action items in your notes (e.g., 'follow up with John on Tuesday').",
+      "Smart reminders are created from your content — no manual setup needed.",
+      "View and manage all reminders from the Reminders screen.",
+      "Get push notifications so you never miss a follow-up.",
+      "Pro feature: Unlimited smart reminders with priority levels.",
+    ],
+  },
+  {
+    icon: "person.2.fill",
+    iconColor: "#3498DB",
+    title: "Collaborative Folders",
+    content: [
+      "Share folders with team members for collaborative knowledge bases.",
+      "Set role-based access: Viewer (read-only) or Editor (full access).",
+      "Invite collaborators by email to join your shared folders.",
+      "All collaborators can search and query the shared knowledge.",
+      "Pro feature: Unlimited collaborators and shared folders.",
+    ],
+  },
+  {
+    icon: "sun.max.fill",
+    iconColor: "#E67E22",
+    title: "Daily Digest",
+    content: [
+      "Every morning, MindVault surfaces the most relevant memory or insight.",
+      "The Daily Digest is based on what you've been focusing on recently.",
+      "Find it on your Home screen — a quick way to revisit key knowledge.",
+      "Tap the digest to explore related memories and dive deeper.",
+    ],
+  },
+  {
+    icon: "scope",
+    iconColor: "#00C9A7",
+    title: "Focus Mode",
+    content: [
+      "Pair a timer with a specific folder for deep-work sessions.",
+      "Everything you capture during Focus Mode is automatically tagged.",
+      "Track how many memories you captured per session.",
+      "Great for research sprints, study sessions, or brainstorming.",
+      "Access Focus Mode from the Home screen Quick Actions.",
+    ],
+  },
 ];
 
 export default function GuideScreen() {
@@ -132,7 +180,7 @@ export default function GuideScreen() {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
 
   return (
-    <ScreenContainer edges={["top", "bottom", "left", "right"]}>
+    <GlassScreen screenName="detail" edges={["top", "bottom", "left", "right"]}>
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
           <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
@@ -190,7 +238,7 @@ export default function GuideScreen() {
           );
         })}
       </ScrollView>
-    </ScreenContainer>
+    </GlassScreen>
   );
 }
 

@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { Text, View, TextInput, Pressable, ActivityIndicator, FlatList, RefreshControl, StyleSheet, ScrollView } from "react-native";
-import { ScreenContainer } from "@/components/screen-container";
+import { GlassScreen, GlassCard } from "@/components/glass-screen";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/hooks/use-auth";
@@ -56,10 +57,10 @@ export default function LibraryScreen() {
 
   if (!isLoggedIn) {
     return (
-      <ScreenContainer className="flex-1 items-center justify-center p-6">
+      <GlassScreen screenName="library" className="flex-1 items-center justify-center p-6">
         <IconSymbol name="book.fill" size={48} color={colors.muted} />
         <Text className="text-lg text-muted mt-4 text-center">Sign in to view your library</Text>
-      </ScreenContainer>
+      </GlassScreen>
     );
   }
 
@@ -125,7 +126,7 @@ export default function LibraryScreen() {
   }, [colors, router, favorites, memoryTags, tags]);
 
   return (
-    <ScreenContainer>
+    <GlassScreen screenName="library">
       <View style={styles.headerRow}>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Library</Text>
         <View style={styles.headerActions}>
@@ -275,7 +276,7 @@ export default function LibraryScreen() {
           }
         />
       )}
-    </ScreenContainer>
+    </GlassScreen>
   );
 }
 
