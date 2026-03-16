@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { ScrollView, Text, View, Pressable, ActivityIndicator, Alert, Share, Platform, StyleSheet } from "react-native";
+import { ScrollView, Text, View, Pressable, ActivityIndicator, Alert, Share, StyleSheet } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
@@ -9,11 +9,11 @@ import { useAppState } from "@/lib/app-state";
 import { loadFolders, saveFolders, Folder } from "../folders";
 
 const TYPE_META: Record<string, { icon: any; color: string; label: string }> = {
-  text: { icon: "text.alignleft", color: "#6C5CE7", label: "Text Note" },
-  image: { icon: "photo.fill", color: "#00D2D3", label: "Image" },
-  voice: { icon: "mic.fill", color: "#FF6B6B", label: "Voice Recording" },
-  document: { icon: "doc.fill", color: "#FDCB6E", label: "Document" },
-  link: { icon: "globe", color: "#00B894", label: "Web Link" },
+  text: { icon: "text.alignleft", color: "#00C9A7", label: "Text Note" },
+  image: { icon: "photo.fill", color: "#D4A017", label: "Image" },
+  voice: { icon: "mic.fill", color: "#E74C3C", label: "Voice Recording" },
+  document: { icon: "doc.fill", color: "#3498DB", label: "Document" },
+  link: { icon: "globe", color: "#1ABC9C", label: "Web Link" },
 };
 
 export default function MemoryDetailScreen() {
@@ -23,7 +23,10 @@ export default function MemoryDetailScreen() {
   const memoryId = parseInt(id || "0", 10);
   const [deleting, setDeleting] = useState(false);
   const [folders, setFolders] = useState<Folder[]>([]);
-  const { isFavorite, toggleFavorite, canUseFeature } = useAppState();
+  const {
+    isFavorite, toggleFavorite, canUseFeature,
+    tags, getMemoryTags, addTagToMemory, removeTagFromMemory,
+  } = useAppState();
 
   const memoryQuery = trpc.memories.get.useQuery({ id: memoryId }, { enabled: memoryId > 0 });
   const deleteMutation = trpc.memories.delete.useMutation();
@@ -34,6 +37,7 @@ export default function MemoryDetailScreen() {
   }, []);
 
   const fav = isFavorite(memoryId);
+  const memTags = getMemoryTags(memoryId);
 
   const handleDelete = () => {
     Alert.alert("Delete Memory", "Are you sure you want to delete this memory?", [
@@ -70,12 +74,8 @@ export default function MemoryDetailScreen() {
       memory.sourceUrl ? `\nSource: ${memory.sourceUrl}` : "",
       "\n— Shared from MindVault",
     ].filter(Boolean).join("\n");
-
     try {
-      await Share.share({
-        message: shareContent,
-        title: memory.title,
-      });
+      await Share.share({ message: shareContent, title: memory.title });
     } catch {}
   }, [memoryQuery.data]);
 
@@ -108,6 +108,29 @@ export default function MemoryDetailScreen() {
     Alert.alert("Add to Folder", "Select a folder:", buttons);
   }, [folders, memoryId, router]);
 
+  const handleTagToggle = useCallback(() => {
+    if (tags.length === 0) {
+      Alert.alert("No Tags", "Create tags first to organize your memories.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Create Tag", onPress: () => router.push("/tags" as any) },
+      ]);
+      return;
+    }
+    const memTagIds = memTags.map((t) => t.id);
+    const buttons = tags.map((t) => ({
+      text: `${memTagIds.includes(t.id) ? "✓ " : ""}${t.name}`,
+      onPress: () => {
+        if (memTagIds.includes(t.id)) {
+          removeTagFromMemory(memoryId, t.id);
+        } else {
+          addTagToMemory(memoryId, t.id);
+        }
+      },
+    }));
+    buttons.push({ text: "Done", onPress: () => {} });
+    Alert.alert("Toggle Tags", "Tap a tag to add/remove:", buttons);
+  }, [tags, memTags, memoryId, addTagToMemory, removeTagFromMemory, router]);
+
   if (memoryQuery.isLoading) {
     return (
       <ScreenContainer edges={["top", "bottom", "left", "right"]} className="flex-1 items-center justify-center">
@@ -130,17 +153,11 @@ export default function MemoryDetailScreen() {
 
   const typeMeta = TYPE_META[memory.type] || TYPE_META.text;
   const dateStr = new Date(memory.createdAt).toLocaleDateString(undefined, {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
+    weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
   });
 
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
-      {/* Header */}
       <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
           <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
@@ -148,7 +165,10 @@ export default function MemoryDetailScreen() {
         <View style={{ flex: 1 }} />
         <View style={styles.headerActions}>
           <Pressable onPress={() => toggleFavorite(memoryId)} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
-            <IconSymbol name={fav ? "star.fill" : "star"} size={22} color={fav ? "#FDCB6E" : colors.muted} />
+            <IconSymbol name={fav ? "star.fill" : "star"} size={22} color={fav ? colors.accent : colors.muted} />
+          </Pressable>
+          <Pressable onPress={handleTagToggle} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
+            <IconSymbol name="tag.fill" size={20} color={colors.primary} />
           </Pressable>
           <Pressable onPress={handleAddToFolder} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
             <IconSymbol name="folder.badge.plus" size={22} color={colors.primary} />
@@ -160,27 +180,22 @@ export default function MemoryDetailScreen() {
             <IconSymbol name="square.and.arrow.up" size={20} color={colors.primary} />
           </Pressable>
           <Pressable onPress={handleDelete} disabled={deleting} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
-            {deleting ? (
-              <ActivityIndicator size="small" color={colors.error} />
-            ) : (
-              <IconSymbol name="trash.fill" size={20} color={colors.error} />
-            )}
+            {deleting ? <ActivityIndicator size="small" color={colors.error} /> : <IconSymbol name="trash.fill" size={20} color={colors.error} />}
           </Pressable>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-        {/* Type Badge & Title */}
         <View className="px-5 pt-4">
           <View style={styles.badgeRow}>
-            <View style={[styles.typeBadge, { backgroundColor: typeMeta.color + "18" }]}>
+            <View style={[styles.typeBadge, { backgroundColor: typeMeta.color + "15" }]}>
               <IconSymbol name={typeMeta.icon} size={14} color={typeMeta.color} />
               <Text style={{ color: typeMeta.color, fontSize: 12, fontWeight: "600" }}>{typeMeta.label}</Text>
             </View>
             {fav && (
-              <View style={[styles.typeBadge, { backgroundColor: "#FDCB6E" + "18" }]}>
-                <IconSymbol name="star.fill" size={12} color="#FDCB6E" />
-                <Text style={{ color: "#FDCB6E", fontSize: 12, fontWeight: "600" }}>Favorite</Text>
+              <View style={[styles.typeBadge, { backgroundColor: colors.accent + "15" }]}>
+                <IconSymbol name="star.fill" size={12} color={colors.accent} />
+                <Text style={{ color: colors.accent, fontSize: 12, fontWeight: "600" }}>Favorite</Text>
               </View>
             )}
           </View>
@@ -188,17 +203,27 @@ export default function MemoryDetailScreen() {
           <Text style={[styles.date, { color: colors.muted }]}>{dateStr}</Text>
         </View>
 
-        {/* Processing Status */}
-        {!memory.processed && (
-          <View style={[styles.processingBanner, { backgroundColor: colors.primary + "10" }]}>
-            <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={{ color: colors.primary, fontSize: 14, marginLeft: 8 }}>
-              AI is processing this memory...
-            </Text>
+        {/* Tags */}
+        {memTags.length > 0 && (
+          <View className="px-5 mt-3">
+            <View style={styles.tagRow}>
+              {memTags.map((tag) => (
+                <View key={tag.id} style={[styles.tagChip, { backgroundColor: tag.color + "15" }]}>
+                  <View style={[styles.tagDot, { backgroundColor: tag.color }]} />
+                  <Text style={{ color: tag.color, fontSize: 12, fontWeight: "600" }}>{tag.name}</Text>
+                </View>
+              ))}
+            </View>
           </View>
         )}
 
-        {/* AI Summary */}
+        {!memory.processed && (
+          <View style={[styles.processingBanner, { backgroundColor: colors.primary + "10" }]}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={{ color: colors.primary, fontSize: 14, marginLeft: 8 }}>AI is processing this memory...</Text>
+          </View>
+        )}
+
         {memory.aiSummary && (
           <View className="px-5 mt-5">
             <View style={[styles.aiCard, { backgroundColor: colors.primary + "08", borderColor: colors.primary + "25" }]}>
@@ -211,13 +236,12 @@ export default function MemoryDetailScreen() {
           </View>
         )}
 
-        {/* Topics */}
         {memory.aiTopics && memory.aiTopics.length > 0 && (
           <View className="px-5 mt-4">
             <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Topics</Text>
             <View style={styles.topicRow}>
               {memory.aiTopics.map((topic: string) => (
-                <View key={topic} style={[styles.topicChip, { backgroundColor: colors.primary + "15" }]}>
+                <View key={topic} style={[styles.topicChip, { backgroundColor: colors.primary + "12" }]}>
                   <Text style={{ color: colors.primary, fontSize: 13, fontWeight: "600" }}>{topic}</Text>
                 </View>
               ))}
@@ -225,20 +249,18 @@ export default function MemoryDetailScreen() {
           </View>
         )}
 
-        {/* Key Insights */}
         {memory.aiKeyInsights && memory.aiKeyInsights.length > 0 && (
           <View className="px-5 mt-4">
             <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Key Insights</Text>
             {memory.aiKeyInsights.map((insight: string, i: number) => (
               <View key={i} style={styles.insightRow}>
-                <View style={[styles.insightDot, { backgroundColor: "#FDCB6E" }]} />
+                <View style={[styles.insightDot, { backgroundColor: colors.accent }]} />
                 <Text style={[styles.insightText, { color: colors.foreground }]}>{insight}</Text>
               </View>
             ))}
           </View>
         )}
 
-        {/* Transcription */}
         {memory.aiTranscription && (
           <View className="px-5 mt-4">
             <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Transcription</Text>
@@ -248,7 +270,6 @@ export default function MemoryDetailScreen() {
           </View>
         )}
 
-        {/* Extracted Text */}
         {memory.aiExtractedText && (
           <View className="px-5 mt-4">
             <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Extracted Text</Text>
@@ -258,7 +279,6 @@ export default function MemoryDetailScreen() {
           </View>
         )}
 
-        {/* Original Content */}
         {memory.content && (
           <View className="px-5 mt-4">
             <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Original Content</Text>
@@ -268,7 +288,6 @@ export default function MemoryDetailScreen() {
           </View>
         )}
 
-        {/* Source URL */}
         {memory.sourceUrl && (
           <View className="px-5 mt-4">
             <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Source</Text>
@@ -291,11 +310,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
   },
   backBtn: { padding: 4 },
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-  },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 14 },
   badgeRow: { flexDirection: "row", gap: 8, marginBottom: 10 },
   typeBadge: {
     flexDirection: "row",
@@ -308,6 +323,16 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 24, fontWeight: "700", lineHeight: 30 },
   date: { fontSize: 13, marginTop: 6 },
+  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  tagChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    gap: 5,
+  },
+  tagDot: { width: 8, height: 8, borderRadius: 4 },
   processingBanner: {
     flexDirection: "row",
     alignItems: "center",

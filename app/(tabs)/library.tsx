@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Text, View, TextInput, Pressable, ActivityIndicator, FlatList, RefreshControl, StyleSheet } from "react-native";
+import { Text, View, TextInput, Pressable, ActivityIndicator, FlatList, RefreshControl, StyleSheet, ScrollView } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
@@ -10,11 +10,11 @@ import { useAppState } from "@/lib/app-state";
 import { TutorialTip } from "@/components/tutorial-tip";
 
 const TYPE_ICONS: Record<string, { icon: any; color: string }> = {
-  text: { icon: "text.alignleft", color: "#6C5CE7" },
-  image: { icon: "photo.fill", color: "#00D2D3" },
-  voice: { icon: "mic.fill", color: "#FF6B6B" },
-  document: { icon: "doc.fill", color: "#FDCB6E" },
-  link: { icon: "globe", color: "#00B894" },
+  text: { icon: "text.alignleft", color: "#00C9A7" },
+  image: { icon: "photo.fill", color: "#D4A017" },
+  voice: { icon: "mic.fill", color: "#E74C3C" },
+  document: { icon: "doc.fill", color: "#3498DB" },
+  link: { icon: "globe", color: "#1ABC9C" },
 };
 
 const FILTERS = [
@@ -31,9 +31,10 @@ export default function LibraryScreen() {
   const colors = useColors();
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const { isGuest, favorites, isFavorite, toggleFavorite } = useAppState();
+  const { isGuest, favorites, tags, memoryTags, getMemoriesByTag } = useAppState();
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
+  const [activeTagId, setActiveTagId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const isLoggedIn = isAuthenticated || isGuest;
@@ -66,24 +67,29 @@ export default function LibraryScreen() {
   if (activeFilter === "favorites") {
     memories = memories.filter((m) => favorites.includes(m.id));
   }
+  // Tag filter
+  if (activeTagId) {
+    const tagMemIds = getMemoriesByTag(activeTagId);
+    memories = memories.filter((m) => tagMemIds.includes(m.id));
+  }
 
   const renderItem = useCallback(({ item }: { item: any }) => {
     const typeInfo = TYPE_ICONS[item.type] || TYPE_ICONS.text;
-    const dateStr = new Date(item.createdAt).toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-    });
+    const dateStr = new Date(item.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" });
     const fav = favorites.includes(item.id);
+    const itemTagIds = memoryTags[item.id] || [];
+    const itemTags = tags.filter((t) => itemTagIds.includes(t.id));
+
     return (
       <Pressable
         onPress={() => router.push(`/memory/${item.id}` as any)}
         style={({ pressed }) => [
           styles.memoryCard,
-          { backgroundColor: colors.surface, borderColor: fav ? "#FDCB6E40" : colors.border },
+          { backgroundColor: colors.surface, borderColor: fav ? colors.accent + "40" : colors.border },
           pressed && { opacity: 0.7 },
         ]}
       >
-        <View style={[styles.typeIcon, { backgroundColor: typeInfo.color + "20" }]}>
+        <View style={[styles.typeIcon, { backgroundColor: typeInfo.color + "15" }]}>
           <IconSymbol name={typeInfo.icon} size={20} color={typeInfo.color} />
         </View>
         <View style={styles.cardContent}>
@@ -92,47 +98,58 @@ export default function LibraryScreen() {
               {item.title}
             </Text>
             <View style={styles.cardMeta}>
-              {fav && <IconSymbol name="star.fill" size={12} color="#FDCB6E" />}
+              {fav && <IconSymbol name="star.fill" size={12} color={colors.accent} />}
               <Text style={[styles.cardDate, { color: colors.muted }]}>{dateStr}</Text>
             </View>
           </View>
           <Text style={[styles.cardSummary, { color: colors.muted }]} numberOfLines={2}>
             {item.aiSummary || item.content || "Processing..."}
           </Text>
-          {item.aiTopics && item.aiTopics.length > 0 && (
-            <View style={styles.tagRow}>
-              {item.aiTopics.slice(0, 3).map((topic: string) => (
-                <View key={topic} style={[styles.tag, { backgroundColor: colors.primary + "15" }]}>
-                  <Text style={{ fontSize: 11, color: colors.primary }}>{topic}</Text>
-                </View>
-              ))}
-            </View>
-          )}
+          <View style={styles.tagRow}>
+            {item.aiTopics && item.aiTopics.slice(0, 2).map((topic: string) => (
+              <View key={topic} style={[styles.tag, { backgroundColor: colors.primary + "12" }]}>
+                <Text style={{ fontSize: 11, color: colors.primary }}>{topic}</Text>
+              </View>
+            ))}
+            {itemTags.slice(0, 2).map((tag) => (
+              <View key={tag.id} style={[styles.tag, { backgroundColor: tag.color + "15" }]}>
+                <View style={[styles.tagDotSmall, { backgroundColor: tag.color }]} />
+                <Text style={{ fontSize: 11, color: tag.color }}>{tag.name}</Text>
+              </View>
+            ))}
+          </View>
         </View>
         {!item.processed && <ActivityIndicator size="small" color={colors.primary} />}
       </Pressable>
     );
-  }, [colors, router, favorites]);
+  }, [colors, router, favorites, memoryTags, tags]);
 
   return (
     <ScreenContainer>
       <View style={styles.headerRow}>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Library</Text>
-        <Pressable
-          onPress={() => router.push("/folders" as any)}
-          style={({ pressed }) => [styles.folderBtn, { backgroundColor: colors.surface }, pressed && { opacity: 0.7 }]}
-        >
-          <IconSymbol name="folder.fill" size={18} color={colors.primary} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable
+            onPress={() => router.push("/tags" as any)}
+            style={({ pressed }) => [styles.headerBtn, { backgroundColor: colors.surface }, pressed && { opacity: 0.7 }]}
+          >
+            <IconSymbol name="tag.fill" size={18} color={colors.primary} />
+          </Pressable>
+          <Pressable
+            onPress={() => router.push("/folders" as any)}
+            style={({ pressed }) => [styles.headerBtn, { backgroundColor: colors.surface }, pressed && { opacity: 0.7 }]}
+          >
+            <IconSymbol name="folder.fill" size={18} color={colors.primary} />
+          </Pressable>
+        </View>
       </View>
 
-      {/* Tutorial Tip */}
       <TutorialTip
         tipKey="library_search"
         icon="magnifyingglass"
-        iconColor="#00B894"
+        iconColor={colors.primary}
         title="Search Your Knowledge"
-        message="Use the search bar to find memories by title, content, or AI-extracted topics. Filter by type or view your favorites."
+        message="Use the search bar to find memories by title, content, or AI-extracted topics. Filter by type, tags, or view your favorites."
       />
 
       {/* Search Bar */}
@@ -155,29 +172,29 @@ export default function LibraryScreen() {
         </View>
       </View>
 
-      {/* Filter Chips */}
+      {/* Type Filter Chips */}
       <View style={styles.filterRow}>
         {FILTERS.map((f) => (
           <Pressable
             key={f.key}
-            onPress={() => setActiveFilter(f.key)}
+            onPress={() => { setActiveFilter(f.key); setActiveTagId(null); }}
             style={({ pressed }) => [
               styles.filterChip,
               {
-                backgroundColor: activeFilter === f.key ? colors.primary : colors.surface,
-                borderColor: activeFilter === f.key ? colors.primary : colors.border,
+                backgroundColor: activeFilter === f.key && !activeTagId ? colors.primary : colors.surface,
+                borderColor: activeFilter === f.key && !activeTagId ? colors.primary : colors.border,
               },
               pressed && { opacity: 0.8 },
             ]}
           >
             {"icon" in f && f.icon && (
-              <IconSymbol name={f.icon} size={12} color={activeFilter === f.key ? "#fff" : "#FDCB6E"} />
+              <IconSymbol name={f.icon} size={12} color={activeFilter === f.key && !activeTagId ? "#fff" : colors.accent} />
             )}
             <Text
               style={{
                 fontSize: 13,
                 fontWeight: "600",
-                color: activeFilter === f.key ? "#fff" : colors.muted,
+                color: activeFilter === f.key && !activeTagId ? "#fff" : colors.muted,
               }}
             >
               {f.label}
@@ -185,6 +202,42 @@ export default function LibraryScreen() {
           </Pressable>
         ))}
       </View>
+
+      {/* Tag Filter Chips */}
+      {tags.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 4 }}>
+          <View style={styles.tagFilterRow}>
+            {tags.map((tag) => (
+              <Pressable
+                key={tag.id}
+                onPress={() => {
+                  setActiveTagId(activeTagId === tag.id ? null : tag.id);
+                  setActiveFilter("all");
+                }}
+                style={({ pressed }) => [
+                  styles.filterChip,
+                  {
+                    backgroundColor: activeTagId === tag.id ? tag.color : colors.surface,
+                    borderColor: activeTagId === tag.id ? tag.color : colors.border,
+                  },
+                  pressed && { opacity: 0.8 },
+                ]}
+              >
+                <View style={[styles.tagDotSmall, { backgroundColor: activeTagId === tag.id ? "#fff" : tag.color }]} />
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: "600",
+                    color: activeTagId === tag.id ? "#fff" : tag.color,
+                  }}
+                >
+                  {tag.name}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </ScrollView>
+      )}
 
       {/* Memory List */}
       {memoriesQuery.isLoading ? (
@@ -198,26 +251,22 @@ export default function LibraryScreen() {
           renderItem={renderItem}
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20, paddingTop: 4 }}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <IconSymbol
-                name={activeFilter === "favorites" ? "star" : "magnifyingglass"}
+                name={activeFilter === "favorites" ? "star" : activeTagId ? "tag.fill" : "magnifyingglass"}
                 size={40}
                 color={colors.muted}
               />
               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-                {activeFilter === "favorites"
-                  ? "No favorites yet"
-                  : search
-                  ? "No results found"
-                  : "No memories yet"}
+                {activeFilter === "favorites" ? "No favorites yet" : activeTagId ? "No memories with this tag" : search ? "No results found" : "No memories yet"}
               </Text>
               <Text style={[styles.emptySubtitle, { color: colors.muted }]}>
                 {activeFilter === "favorites"
                   ? "Star memories to find them quickly here"
+                  : activeTagId
+                  ? "Tag some memories to see them here"
                   : search
                   ? "Try different keywords or filters"
                   : "Start capturing notes, images, and links"}
@@ -240,7 +289,8 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   headerTitle: { fontSize: 24, fontWeight: "700" },
-  folderBtn: {
+  headerActions: { flexDirection: "row", gap: 8 },
+  headerBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -264,6 +314,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     gap: 8,
     flexWrap: "wrap",
+  },
+  tagFilterRow: {
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    gap: 8,
   },
   filterChip: {
     flexDirection: "row",
@@ -299,13 +354,17 @@ const styles = StyleSheet.create({
   cardMeta: { flexDirection: "row", alignItems: "center", gap: 4 },
   cardDate: { fontSize: 12 },
   cardSummary: { fontSize: 13, marginTop: 3, lineHeight: 18 },
-  tagRow: { flexDirection: "row", gap: 6, marginTop: 6 },
-  tag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-  emptyState: {
+  tagRow: { flexDirection: "row", gap: 6, marginTop: 6, flexWrap: "wrap" },
+  tag: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingTop: 60,
-    gap: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    gap: 4,
   },
+  tagDotSmall: { width: 6, height: 6, borderRadius: 3 },
+  emptyState: { alignItems: "center", paddingTop: 60, gap: 8 },
   emptyTitle: { fontSize: 17, fontWeight: "600" },
   emptySubtitle: { fontSize: 14, textAlign: "center" },
 });

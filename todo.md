@@ -45,3 +45,19 @@
 - [x] Market research feature based on attached documents (via AI analyze)
 - [x] New icon mappings for all new features
 - [x] Comprehensive unit tests for all new features (48 tests passing)
+
+## Phase 3 - Tag Filtering, Focus Mode, Export, and UI Redesign
+
+- [x] Tag-based filtering system (custom user tags beyond AI topics)
+- [x] Tag creation, editing, and deletion
+- [x] Tag assignment to memories
+- [x] Cross-folder tag search
+- [x] Tag filter in Library screen
+- [x] Focus Mode timer with folder pairing
+- [x] Focus Mode session tracking (what was captured during session)
+- [x] Focus Mode UI with countdown timer
+- [x] Data export/backup as ZIP of markdown files
+- [x] Full knowledge base export
+- [x] Aurora green + gold accent theme redesign
+- [x] Custom backgrounds for each page (thinking/brain/AI concept)
+- [x] NanoBanana image-based slides for UI showcase

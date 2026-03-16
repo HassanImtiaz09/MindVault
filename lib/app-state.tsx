@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Subscription tiers
@@ -36,7 +36,7 @@ export const PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
     name: "Pro",
     price: "$9.99/mo",
     priceMonthly: 9.99,
-    memoryLimit: -1, // unlimited
+    memoryLimit: -1,
     folderLimit: -1,
     features: [
       "Unlimited memories",
@@ -46,7 +46,9 @@ export const PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
       "Contract & medical report analysis",
       "Market research from documents",
       "Report generation",
-      "Export as PDF",
+      "Export & backup",
+      "Focus Mode",
+      "Custom tags",
       "Push notification reminders",
       "Priority AI processing",
       "Knowledge graph visualization",
@@ -55,6 +57,24 @@ export const PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
   },
 };
 
+// Tag type
+export interface UserTag {
+  id: string;
+  name: string;
+  color: string;
+}
+
+// Focus session
+export interface FocusSession {
+  id: string;
+  folderId: string;
+  folderName: string;
+  startedAt: string;
+  durationMinutes: number;
+  capturedMemoryIds: number[];
+  completed: boolean;
+}
+
 interface AppState {
   isGuest: boolean;
   hasCompletedOnboarding: boolean;
@@ -62,7 +82,13 @@ interface AppState {
   subscription: SubscriptionTier;
   favorites: number[];
   notificationsEnabled: boolean;
-  captureReminderTime: string; // "HH:mm"
+  captureReminderTime: string;
+  // Tags
+  tags: UserTag[];
+  memoryTags: Record<number, string[]>; // memoryId -> tagIds
+  // Focus mode
+  focusSessions: FocusSession[];
+  activeFocusSession: FocusSession | null;
 }
 
 interface AppStateContextType extends AppState {
@@ -79,6 +105,17 @@ interface AppStateContextType extends AppState {
   getFolderLimit: () => number;
   currentPlan: SubscriptionPlan;
   loaded: boolean;
+  // Tags
+  createTag: (name: string, color: string) => UserTag;
+  deleteTag: (tagId: string) => void;
+  addTagToMemory: (memoryId: number, tagId: string) => void;
+  removeTagFromMemory: (memoryId: number, tagId: string) => void;
+  getMemoryTags: (memoryId: number) => UserTag[];
+  getMemoriesByTag: (tagId: string) => number[];
+  // Focus mode
+  startFocusSession: (folderId: string, folderName: string, durationMinutes: number) => void;
+  endFocusSession: () => void;
+  addMemoryToFocusSession: (memoryId: number) => void;
 }
 
 const defaultState: AppState = {
@@ -89,6 +126,10 @@ const defaultState: AppState = {
   favorites: [],
   notificationsEnabled: false,
   captureReminderTime: "09:00",
+  tags: [],
+  memoryTags: {},
+  focusSessions: [],
+  activeFocusSession: null,
 };
 
 const AppStateContext = createContext<AppStateContextType>({
@@ -106,6 +147,15 @@ const AppStateContext = createContext<AppStateContextType>({
   getFolderLimit: () => 3,
   currentPlan: PLANS.basic,
   loaded: false,
+  createTag: () => ({ id: "", name: "", color: "" }),
+  deleteTag: () => {},
+  addTagToMemory: () => {},
+  removeTagFromMemory: () => {},
+  getMemoryTags: () => [],
+  getMemoriesByTag: () => [],
+  startFocusSession: () => {},
+  endFocusSession: () => {},
+  addMemoryToFocusSession: () => {},
 });
 
 const STORAGE_KEY = "@mindvault_app_state";
@@ -113,6 +163,8 @@ const STORAGE_KEY = "@mindvault_app_state";
 export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState);
   const [loaded, setLoaded] = useState(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
@@ -160,19 +212,115 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     });
   }, [persist]);
 
-  const isFavorite = useCallback((memoryId: number) => state.favorites.includes(memoryId), [state.favorites]);
+  const isFavorite = useCallback((memoryId: number) => stateRef.current.favorites.includes(memoryId), []);
   const setNotificationsEnabled = useCallback((v: boolean) => update({ notificationsEnabled: v }), [update]);
   const setCaptureReminderTime = useCallback((time: string) => update({ captureReminderTime: time }), [update]);
 
-  const proFeatures = ["document_analysis", "voice_capture", "image_capture", "export_pdf", "report_generation", "market_research", "idea_generation", "knowledge_graph", "push_notifications", "unlimited_memories", "unlimited_folders", "advanced_ai"];
+  const proFeatures = ["document_analysis", "voice_capture", "image_capture", "export_pdf", "report_generation", "market_research", "idea_generation", "knowledge_graph", "push_notifications", "unlimited_memories", "unlimited_folders", "advanced_ai", "focus_mode", "custom_tags", "data_export"];
 
   const canUseFeature = useCallback((feature: string) => {
-    if (state.subscription === "pro") return true;
+    if (stateRef.current.subscription === "pro") return true;
     return !proFeatures.includes(feature);
-  }, [state.subscription]);
+  }, []);
 
-  const getMemoryLimit = useCallback(() => PLANS[state.subscription].memoryLimit, [state.subscription]);
-  const getFolderLimit = useCallback(() => PLANS[state.subscription].folderLimit, [state.subscription]);
+  const getMemoryLimit = useCallback(() => PLANS[stateRef.current.subscription].memoryLimit, []);
+  const getFolderLimit = useCallback(() => PLANS[stateRef.current.subscription].folderLimit, []);
+
+  // Tag functions
+  const createTag = useCallback((name: string, color: string): UserTag => {
+    const tag: UserTag = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, color };
+    setState((prev) => {
+      const next = { ...prev, tags: [...prev.tags, tag] };
+      persist(next);
+      return next;
+    });
+    return tag;
+  }, [persist]);
+
+  const deleteTag = useCallback((tagId: string) => {
+    setState((prev) => {
+      const newMemoryTags = { ...prev.memoryTags };
+      for (const key of Object.keys(newMemoryTags)) {
+        newMemoryTags[Number(key)] = newMemoryTags[Number(key)].filter((id) => id !== tagId);
+      }
+      const next = { ...prev, tags: prev.tags.filter((t) => t.id !== tagId), memoryTags: newMemoryTags };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const addTagToMemory = useCallback((memoryId: number, tagId: string) => {
+    setState((prev) => {
+      const existing = prev.memoryTags[memoryId] || [];
+      if (existing.includes(tagId)) return prev;
+      const next = { ...prev, memoryTags: { ...prev.memoryTags, [memoryId]: [...existing, tagId] } };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const removeTagFromMemory = useCallback((memoryId: number, tagId: string) => {
+    setState((prev) => {
+      const existing = prev.memoryTags[memoryId] || [];
+      const next = { ...prev, memoryTags: { ...prev.memoryTags, [memoryId]: existing.filter((id) => id !== tagId) } };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const getMemoryTags = useCallback((memoryId: number): UserTag[] => {
+    const tagIds = stateRef.current.memoryTags[memoryId] || [];
+    return stateRef.current.tags.filter((t) => tagIds.includes(t.id));
+  }, []);
+
+  const getMemoriesByTag = useCallback((tagId: string): number[] => {
+    return Object.entries(stateRef.current.memoryTags)
+      .filter(([_, tagIds]) => tagIds.includes(tagId))
+      .map(([memId]) => Number(memId));
+  }, []);
+
+  // Focus mode functions
+  const startFocusSession = useCallback((folderId: string, folderName: string, durationMinutes: number) => {
+    const session: FocusSession = {
+      id: Date.now().toString(36),
+      folderId,
+      folderName,
+      startedAt: new Date().toISOString(),
+      durationMinutes,
+      capturedMemoryIds: [],
+      completed: false,
+    };
+    update({ activeFocusSession: session });
+  }, [update]);
+
+  const endFocusSession = useCallback(() => {
+    setState((prev) => {
+      if (!prev.activeFocusSession) return prev;
+      const completed = { ...prev.activeFocusSession, completed: true };
+      const next = {
+        ...prev,
+        activeFocusSession: null,
+        focusSessions: [...prev.focusSessions, completed],
+      };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const addMemoryToFocusSession = useCallback((memoryId: number) => {
+    setState((prev) => {
+      if (!prev.activeFocusSession) return prev;
+      const next = {
+        ...prev,
+        activeFocusSession: {
+          ...prev.activeFocusSession,
+          capturedMemoryIds: [...prev.activeFocusSession.capturedMemoryIds, memoryId],
+        },
+      };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
 
   return (
     <AppStateContext.Provider
@@ -191,6 +339,15 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         getFolderLimit,
         currentPlan: PLANS[state.subscription],
         loaded,
+        createTag,
+        deleteTag,
+        addTagToMemory,
+        removeTagFromMemory,
+        getMemoryTags,
+        getMemoriesByTag,
+        startFocusSession,
+        endFocusSession,
+        addMemoryToFocusSession,
       }}
     >
       {children}

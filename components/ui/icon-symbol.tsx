@@ -39,7 +39,6 @@ const MAPPING = {
   "gearshape.fill": "settings",
   "arrow.left": "arrow-back",
   "ellipsis": "more-horiz",
-  // New icons for expanded features
   "star.fill": "star",
   "star": "star-border",
   "folder.fill": "folder",
@@ -70,6 +69,20 @@ const MAPPING = {
   "doc.on.doc.fill": "file-copy",
   "eye.fill": "visibility",
   "heart.fill": "favorite",
+  // Phase 3 icons
+  "timer": "timer",
+  "stop.fill": "stop",
+  "archivebox.fill": "archive",
+  "leaf.fill": "eco",
+  "scope": "center-focus-strong",
+  "target": "gps-fixed",
+  "number": "tag",
+  "plus": "add",
+  "minus": "remove",
+  "chevron.down": "expand-more",
+  "chevron.up": "expand-less",
+  "square.grid.2x2.fill": "grid-view",
+  "line.3.horizontal.decrease": "filter-list",
 } as unknown as IconMapping;
 
 export function IconSymbol({

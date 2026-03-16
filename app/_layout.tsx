@@ -95,6 +95,9 @@ export default function RootLayout() {
             <Stack.Screen name="folders" options={{ presentation: "modal" }} />
             <Stack.Screen name="folder/[id]" />
             <Stack.Screen name="analyze" options={{ presentation: "modal" }} />
+            <Stack.Screen name="focus" />
+            <Stack.Screen name="tags" options={{ presentation: "modal" }} />
+            <Stack.Screen name="export" options={{ presentation: "modal" }} />
             <Stack.Screen name="oauth/callback" />
           </Stack>
           <StatusBar style="auto" />

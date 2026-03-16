@@ -691,3 +691,359 @@ describe("Share Content Generation", () => {
     expect(shareContent).toContain("— Shared from MindVault");
   });
 });
+
+
+// ─── Phase 3: Tag System Logic ──────────────────────────────────────────────
+
+describe("Tag System Logic", () => {
+  interface UserTag {
+    id: string;
+    name: string;
+    color: string;
+  }
+
+  it("creates a tag with correct structure", () => {
+    const tag: UserTag = {
+      id: "abc123",
+      name: "Important",
+      color: "#D4A017",
+    };
+    expect(tag.name).toBe("Important");
+    expect(tag.color).toBe("#D4A017");
+    expect(tag.id).toBeTruthy();
+  });
+
+  it("adds tag to memory", () => {
+    const memoryTags: Record<number, string[]> = {};
+    const memoryId = 42;
+    const tagId = "tag1";
+
+    const existing = memoryTags[memoryId] || [];
+    if (!existing.includes(tagId)) {
+      memoryTags[memoryId] = [...existing, tagId];
+    }
+
+    expect(memoryTags[42]).toContain("tag1");
+    expect(memoryTags[42]).toHaveLength(1);
+  });
+
+  it("prevents duplicate tag on same memory", () => {
+    const memoryTags: Record<number, string[]> = { 42: ["tag1"] };
+    const memoryId = 42;
+    const tagId = "tag1";
+
+    const existing = memoryTags[memoryId] || [];
+    if (!existing.includes(tagId)) {
+      memoryTags[memoryId] = [...existing, tagId];
+    }
+
+    expect(memoryTags[42]).toHaveLength(1);
+  });
+
+  it("removes tag from memory", () => {
+    const memoryTags: Record<number, string[]> = { 42: ["tag1", "tag2", "tag3"] };
+    const memoryId = 42;
+    const tagId = "tag2";
+
+    const existing = memoryTags[memoryId] || [];
+    memoryTags[memoryId] = existing.filter((id) => id !== tagId);
+
+    expect(memoryTags[42]).toHaveLength(2);
+    expect(memoryTags[42]).not.toContain("tag2");
+  });
+
+  it("deletes tag and removes from all memories", () => {
+    const tags: UserTag[] = [
+      { id: "tag1", name: "Work", color: "#00C9A7" },
+      { id: "tag2", name: "Personal", color: "#D4A017" },
+    ];
+    const memoryTags: Record<number, string[]> = {
+      1: ["tag1", "tag2"],
+      2: ["tag2"],
+      3: ["tag1"],
+    };
+
+    const tagIdToDelete = "tag2";
+    const updatedTags = tags.filter((t) => t.id !== tagIdToDelete);
+    const updatedMemoryTags: Record<number, string[]> = {};
+    for (const [key, tagIds] of Object.entries(memoryTags)) {
+      updatedMemoryTags[Number(key)] = tagIds.filter((id) => id !== tagIdToDelete);
+    }
+
+    expect(updatedTags).toHaveLength(1);
+    expect(updatedMemoryTags[1]).toEqual(["tag1"]);
+    expect(updatedMemoryTags[2]).toEqual([]);
+    expect(updatedMemoryTags[3]).toEqual(["tag1"]);
+  });
+
+  it("gets memories by tag", () => {
+    const memoryTags: Record<number, string[]> = {
+      1: ["tag1", "tag2"],
+      2: ["tag2"],
+      3: ["tag1"],
+      4: ["tag3"],
+    };
+
+    const tagId = "tag2";
+    const memoryIds = Object.entries(memoryTags)
+      .filter(([_, tagIds]) => tagIds.includes(tagId))
+      .map(([memId]) => Number(memId));
+
+    expect(memoryIds).toEqual([1, 2]);
+  });
+
+  it("gets tags for a memory", () => {
+    const tags: UserTag[] = [
+      { id: "tag1", name: "Work", color: "#00C9A7" },
+      { id: "tag2", name: "Personal", color: "#D4A017" },
+      { id: "tag3", name: "Urgent", color: "#E74C3C" },
+    ];
+    const memoryTags: Record<number, string[]> = { 42: ["tag1", "tag3"] };
+
+    const tagIds = memoryTags[42] || [];
+    const memTags = tags.filter((t) => tagIds.includes(t.id));
+
+    expect(memTags).toHaveLength(2);
+    expect(memTags.map((t) => t.name)).toEqual(["Work", "Urgent"]);
+  });
+});
+
+// ─── Phase 3: Focus Mode Logic ─────────────────────────────────────────────
+
+describe("Focus Mode Logic", () => {
+  interface FocusSession {
+    id: string;
+    folderId: string;
+    folderName: string;
+    startedAt: string;
+    durationMinutes: number;
+    capturedMemoryIds: number[];
+    completed: boolean;
+  }
+
+  it("creates a focus session with correct structure", () => {
+    const session: FocusSession = {
+      id: "session1",
+      folderId: "folder1",
+      folderName: "Marketing Research",
+      startedAt: new Date().toISOString(),
+      durationMinutes: 25,
+      capturedMemoryIds: [],
+      completed: false,
+    };
+
+    expect(session.durationMinutes).toBe(25);
+    expect(session.completed).toBe(false);
+    expect(session.capturedMemoryIds).toHaveLength(0);
+  });
+
+  it("adds captured memory to active session", () => {
+    const session: FocusSession = {
+      id: "session1",
+      folderId: "folder1",
+      folderName: "Work",
+      startedAt: new Date().toISOString(),
+      durationMinutes: 25,
+      capturedMemoryIds: [1, 2],
+      completed: false,
+    };
+
+    session.capturedMemoryIds = [...session.capturedMemoryIds, 3];
+    expect(session.capturedMemoryIds).toHaveLength(3);
+    expect(session.capturedMemoryIds).toContain(3);
+  });
+
+  it("completes a focus session", () => {
+    const session: FocusSession = {
+      id: "session1",
+      folderId: "folder1",
+      folderName: "Work",
+      startedAt: new Date().toISOString(),
+      durationMinutes: 25,
+      capturedMemoryIds: [1, 2, 3],
+      completed: false,
+    };
+
+    const completed = { ...session, completed: true };
+    expect(completed.completed).toBe(true);
+    expect(completed.capturedMemoryIds).toHaveLength(3);
+  });
+
+  it("calculates timer display correctly", () => {
+    const timeLeft = 1523; // seconds
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+
+    expect(minutes).toBe(25);
+    expect(seconds).toBe(23);
+    expect(String(minutes).padStart(2, "0")).toBe("25");
+    expect(String(seconds).padStart(2, "0")).toBe("23");
+  });
+
+  it("calculates progress correctly", () => {
+    const totalSeconds = 25 * 60; // 1500
+    const timeLeft = 750; // halfway
+    const progress = 1 - timeLeft / totalSeconds;
+
+    expect(progress).toBeCloseTo(0.5, 2);
+  });
+
+  it("validates available durations", () => {
+    const DURATIONS = [15, 25, 45, 60, 90];
+    expect(DURATIONS).toHaveLength(5);
+    expect(DURATIONS[0]).toBe(15);
+    expect(DURATIONS[DURATIONS.length - 1]).toBe(90);
+  });
+
+  it("stores completed sessions in history", () => {
+    const sessions: FocusSession[] = [];
+    const completed: FocusSession = {
+      id: "s1",
+      folderId: "f1",
+      folderName: "Work",
+      startedAt: "2026-03-15T10:00:00Z",
+      durationMinutes: 25,
+      capturedMemoryIds: [1, 2],
+      completed: true,
+    };
+
+    sessions.push(completed);
+    expect(sessions).toHaveLength(1);
+    expect(sessions[0].completed).toBe(true);
+  });
+});
+
+// ─── Phase 3: Data Export Logic ─────────────────────────────────────────────
+
+describe("Data Export Logic", () => {
+  it("generates markdown for a single memory export", () => {
+    const memory = {
+      title: "Test Note",
+      type: "text",
+      content: "Some content here",
+      aiSummary: "A brief summary",
+      aiTopics: ["testing", "development"],
+      aiKeyInsights: ["Key point 1"],
+      createdAt: "2026-03-15T10:00:00Z",
+    };
+
+    const lines = [
+      `# ${memory.title}`,
+      `**Type:** ${memory.type} | **Date:** ${new Date(memory.createdAt).toLocaleDateString()}`,
+      "",
+    ];
+    if (memory.aiSummary) lines.push(`## Summary\n${memory.aiSummary}\n`);
+    if (memory.aiTopics?.length) lines.push(`## Topics\n${memory.aiTopics.map((t) => `- ${t}`).join("\n")}\n`);
+    if (memory.aiKeyInsights?.length) lines.push(`## Key Insights\n${memory.aiKeyInsights.map((i) => `- ${i}`).join("\n")}\n`);
+    if (memory.content) lines.push(`## Content\n${memory.content}\n`);
+
+    const md = lines.join("\n");
+    expect(md).toContain("# Test Note");
+    expect(md).toContain("## Summary");
+    expect(md).toContain("- testing");
+    expect(md).toContain("- Key point 1");
+    expect(md).toContain("## Content");
+  });
+
+  it("generates index file for bulk export", () => {
+    const memories = [
+      { id: 1, title: "Note A", type: "text", createdAt: "2026-03-15T10:00:00Z" },
+      { id: 2, title: "Note B", type: "image", createdAt: "2026-03-14T10:00:00Z" },
+      { id: 3, title: "Note C", type: "voice", createdAt: "2026-03-13T10:00:00Z" },
+    ];
+
+    const indexLines = [
+      "# MindVault Knowledge Base Export",
+      `**Exported:** ${new Date().toLocaleDateString()}`,
+      `**Total Memories:** ${memories.length}`,
+      "",
+      "## Memories",
+      "",
+    ];
+
+    for (const m of memories) {
+      indexLines.push(`- [${m.title}](./memory_${m.id}.md) — ${m.type} — ${new Date(m.createdAt).toLocaleDateString()}`);
+    }
+
+    const index = indexLines.join("\n");
+    expect(index).toContain("# MindVault Knowledge Base Export");
+    expect(index).toContain(`**Total Memories:** 3`);
+    expect(index).toContain("[Note A](./memory_1.md)");
+    expect(index).toContain("[Note B](./memory_2.md)");
+  });
+
+  it("sanitizes filenames for export", () => {
+    function sanitizeFilename(name: string): string {
+      return name.replace(/[^a-zA-Z0-9_-]/g, "_").substring(0, 50);
+    }
+
+    expect(sanitizeFilename("My Note: Important!")).toBe("My_Note__Important_");
+    expect(sanitizeFilename("normal-file_name")).toBe("normal-file_name");
+    expect(sanitizeFilename("a".repeat(100))).toHaveLength(50);
+  });
+});
+
+// ─── Phase 3: Updated Feature Gating (with new pro features) ───────────────
+
+describe("Updated Feature Gating with Phase 3 Features", () => {
+  const proFeatures = [
+    "document_analysis", "voice_capture", "image_capture", "export_pdf",
+    "report_generation", "market_research", "idea_generation", "knowledge_graph",
+    "push_notifications", "unlimited_memories", "unlimited_folders", "advanced_ai",
+    "focus_mode", "custom_tags", "data_export",
+  ];
+
+  function canUseFeature(subscription: string, feature: string): boolean {
+    if (subscription === "pro") return true;
+    return !proFeatures.includes(feature);
+  }
+
+  it("basic users cannot use focus_mode", () => {
+    expect(canUseFeature("basic", "focus_mode")).toBe(false);
+  });
+
+  it("basic users cannot use custom_tags", () => {
+    expect(canUseFeature("basic", "custom_tags")).toBe(false);
+  });
+
+  it("basic users cannot use data_export", () => {
+    expect(canUseFeature("basic", "data_export")).toBe(false);
+  });
+
+  it("pro users can use all new features", () => {
+    expect(canUseFeature("pro", "focus_mode")).toBe(true);
+    expect(canUseFeature("pro", "custom_tags")).toBe(true);
+    expect(canUseFeature("pro", "data_export")).toBe(true);
+  });
+
+  it("basic users can still use basic features", () => {
+    expect(canUseFeature("basic", "text_capture")).toBe(true);
+    expect(canUseFeature("basic", "search")).toBe(true);
+    expect(canUseFeature("basic", "link_capture")).toBe(true);
+  });
+});
+
+// ─── Phase 3: Tag Color Palette ─────────────────────────────────────────────
+
+describe("Tag Color Palette", () => {
+  const TAG_COLORS = [
+    "#00C9A7", "#D4A017", "#E74C3C", "#3498DB", "#9B59B6",
+    "#1ABC9C", "#F39C12", "#E67E22", "#2ECC71", "#E91E63",
+  ];
+
+  it("has 10 color options", () => {
+    expect(TAG_COLORS).toHaveLength(10);
+  });
+
+  it("all colors are valid hex codes", () => {
+    const hexRegex = /^#[0-9A-Fa-f]{6}$/;
+    for (const color of TAG_COLORS) {
+      expect(hexRegex.test(color)).toBe(true);
+    }
+  });
+
+  it("has no duplicate colors", () => {
+    const unique = new Set(TAG_COLORS);
+    expect(unique.size).toBe(TAG_COLORS.length);
+  });
+});
