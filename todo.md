@@ -1,0 +1,24 @@
+# Project TODO
+
+- [x] Theme configuration (brand colors, dark/light mode)
+- [x] Tab navigation setup (Home, Capture, Library, Ask AI, Insights)
+- [x] Icon mappings for all tabs
+- [x] Database schema (memories table with types, content, AI extractions)
+- [x] Backend tRPC routes for CRUD operations on memories
+- [x] Backend AI processing route (extract text, summarize, identify topics)
+- [x] Backend natural language query route
+- [x] Backend weekly summary generation route
+- [x] Backend idea generation route
+- [x] File upload to S3 storage (images, audio, PDFs)
+- [x] Voice transcription integration
+- [x] Home screen with greeting, recent memories, stats, quick capture
+- [x] Capture screen with text, voice, image, document, web link modes
+- [x] Library screen with search, filters, and memory list
+- [x] Memory detail screen
+- [x] AI Assistant screen with chat-style Q&A
+- [x] Idea generation feature
+- [x] Weekly summary display
+- [x] Knowledge graph visualization
+- [x] Insights dashboard with topic stats
+- [x] App logo and branding
+- [x] Unit tests for backend logic
