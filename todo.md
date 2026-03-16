@@ -22,3 +22,26 @@
 - [x] Insights dashboard with topic stats
 - [x] App logo and branding
 - [x] Unit tests for backend logic
+
+## Phase 2 - Major Feature Expansion
+
+- [x] Guest mode (use app without sign-in, local storage)
+- [x] Onboarding flow (welcome screens highlighting key features)
+- [x] Subscription model (Basic free tier + Pro tier with pricing)
+- [x] Subscription gate for premium features
+- [x] Enhanced dashboard with document counts, themes, dates, engagement stats
+- [x] Folder system for organizing memories
+- [x] Folder-specific AI analysis
+- [x] Favorites/Pinned feature for memories
+- [x] User guide tab (top corner reference)
+- [x] Tutorial/quick-guide tips for first-time users on each tab
+- [x] Document scanning (contracts, prescriptions, blood reports, etc.)
+- [x] Scan/upload DOCX, presentations, websites/URLs
+- [x] AI document analysis with plain-language summaries
+- [x] Memory sharing/export via system share sheet
+- [x] Push notification reminders (subscription-gated)
+- [x] Weekly AI summary with insights, themes, and knowledge gaps
+- [x] Report generation from uploaded documents (via AI analyze)
+- [x] Market research feature based on attached documents (via AI analyze)
+- [x] New icon mappings for all new features
+- [x] Comprehensive unit tests for all new features (48 tests passing)

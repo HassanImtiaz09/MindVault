@@ -1,28 +1,33 @@
 import { useState, useCallback } from "react";
-import { ScrollView, Text, View, TextInput, Pressable, ActivityIndicator, Alert, Platform } from "react-native";
+import { ScrollView, Text, View, TextInput, Pressable, ActivityIndicator, Alert, Platform, StyleSheet } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
-import { StyleSheet } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
+import { useAppState } from "@/lib/app-state";
+import { TutorialTip } from "@/components/tutorial-tip";
+import { useRouter } from "expo-router";
 
-type CaptureMode = "text" | "voice" | "image" | "document" | "link";
+type CaptureMode = "text" | "voice" | "image" | "document" | "link" | "scan";
 
-const MODES: { key: CaptureMode; label: string; icon: any }[] = [
+const MODES: { key: CaptureMode; label: string; icon: any; proOnly?: boolean }[] = [
   { key: "text", label: "Note", icon: "text.alignleft" },
-  { key: "voice", label: "Voice", icon: "mic.fill" },
   { key: "image", label: "Image", icon: "camera.fill" },
-  { key: "document", label: "PDF", icon: "doc.fill" },
+  { key: "document", label: "Docs", icon: "doc.fill" },
+  { key: "scan", label: "Scan", icon: "scanner.fill", proOnly: true },
   { key: "link", label: "Link", icon: "link" },
+  { key: "voice", label: "Voice", icon: "mic.fill" },
 ];
 
 export default function CaptureScreen() {
   const colors = useColors();
+  const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const { isGuest, canUseFeature, subscription } = useAppState();
   const [mode, setMode] = useState<CaptureMode>("text");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -35,17 +40,17 @@ export default function CaptureScreen() {
     mimeType: string;
   } | null>(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordingUri, setRecordingUri] = useState<string | null>(null);
 
   const createMutation = trpc.memories.create.useMutation();
   const utils = trpc.useUtils();
+
+  const isLoggedIn = isAuthenticated || isGuest;
 
   const resetForm = useCallback(() => {
     setTitle("");
     setContent("");
     setUrl("");
     setSelectedFile(null);
-    setRecordingUri(null);
     setIsRecording(false);
     setSaved(false);
   }, []);
@@ -66,7 +71,7 @@ export default function CaptureScreen() {
         });
         if (!title) setTitle(`Image - ${new Date().toLocaleDateString()}`);
       }
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Failed to pick image");
     }
   }, [title]);
@@ -74,7 +79,13 @@ export default function CaptureScreen() {
   const handlePickDocument = useCallback(async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "application/pdf",
+        type: [
+          "application/pdf",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+          "application/msword",
+          "application/vnd.ms-powerpoint",
+        ],
         copyToCacheDirectory: true,
       });
       if (!result.canceled && result.assets[0]) {
@@ -90,16 +101,50 @@ export default function CaptureScreen() {
           base64,
           mimeType: asset.mimeType || "application/pdf",
         });
-        if (!title) setTitle(asset.name.replace(/\.pdf$/i, ""));
+        if (!title) setTitle(asset.name.replace(/\.(pdf|docx?|pptx?)$/i, ""));
       }
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Failed to pick document");
     }
   }, [title]);
 
+  const handleScanDocument = useCallback(async () => {
+    if (!canUseFeature("document_analysis")) {
+      Alert.alert("Pro Feature", "Document scanning and AI analysis is a Pro feature.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Upgrade", onPress: () => router.push("/subscription" as any) },
+      ]);
+      return;
+    }
+    // Use camera to capture document
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Required", "Camera access is needed to scan documents.");
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        quality: 0.9,
+        base64: true,
+      });
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        setSelectedFile({
+          name: `scan-${Date.now()}.jpg`,
+          base64: asset.base64 || "",
+          mimeType: "image/jpeg",
+        });
+        if (!title) setTitle(`Scanned Document - ${new Date().toLocaleDateString()}`);
+        setMode("image"); // Process as image for OCR
+      }
+    } catch {
+      Alert.alert("Error", "Failed to scan document. Try picking an image instead.");
+    }
+  }, [title, canUseFeature, router]);
+
   const handleStartRecording = useCallback(async () => {
     try {
-      const { requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder, RecordingPresets } = await import("expo-audio");
+      const { requestRecordingPermissionsAsync, setAudioModeAsync } = await import("expo-audio");
       const status = await requestRecordingPermissionsAsync();
       if (!status.granted) {
         Alert.alert("Permission Required", "Microphone access is needed to record voice notes.");
@@ -108,7 +153,7 @@ export default function CaptureScreen() {
       await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
       setIsRecording(true);
       if (!title) setTitle(`Voice Note - ${new Date().toLocaleDateString()}`);
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Voice recording is not available on this platform. Try adding a text note instead.");
     }
   }, [title]);
@@ -118,10 +163,15 @@ export default function CaptureScreen() {
       Alert.alert("Title Required", "Please add a title for your memory.");
       return;
     }
+    if (!isAuthenticated && !isGuest) {
+      Alert.alert("Sign In Required", "Please sign in or use guest mode to save memories.");
+      return;
+    }
     setSaving(true);
     try {
+      const effectiveMode = mode === "scan" ? "image" : mode;
       await createMutation.mutateAsync({
-        type: mode,
+        type: effectiveMode as any,
         title: title.trim(),
         content: content.trim() || undefined,
         sourceUrl: mode === "link" ? url.trim() : undefined,
@@ -134,14 +184,24 @@ export default function CaptureScreen() {
       utils.memories.stats.invalidate();
       setSaved(true);
       setTimeout(() => resetForm(), 2000);
-    } catch (err) {
+    } catch {
       Alert.alert("Error", "Failed to save memory. Please try again.");
     } finally {
       setSaving(false);
     }
-  }, [title, content, url, mode, selectedFile, createMutation, utils, resetForm]);
+  }, [title, content, url, mode, selectedFile, createMutation, utils, resetForm, isAuthenticated, isGuest]);
 
-  if (!isAuthenticated) {
+  const handleModeSelect = useCallback((modeKey: CaptureMode) => {
+    if (modeKey === "scan") {
+      handleScanDocument();
+      return;
+    }
+    setMode(modeKey);
+    setSelectedFile(null);
+    setIsRecording(false);
+  }, [handleScanDocument]);
+
+  if (!isLoggedIn) {
     return (
       <ScreenContainer className="flex-1 items-center justify-center p-6">
         <IconSymbol name="plus.circle.fill" size={48} color={colors.muted} />
@@ -153,10 +213,10 @@ export default function CaptureScreen() {
   if (saved) {
     return (
       <ScreenContainer className="flex-1 items-center justify-center p-6">
-        <View className="items-center gap-4">
+        <View style={styles.savedContainer}>
           <IconSymbol name="checkmark.circle.fill" size={64} color={colors.success} />
-          <Text className="text-2xl font-bold text-foreground">Saved!</Text>
-          <Text className="text-base text-muted text-center">
+          <Text style={[styles.savedTitle, { color: colors.foreground }]}>Saved!</Text>
+          <Text style={[styles.savedSubtitle, { color: colors.muted }]}>
             AI is processing your memory in the background.
           </Text>
           <Pressable
@@ -182,13 +242,22 @@ export default function CaptureScreen() {
           <Text className="text-sm text-muted mt-1">Save a thought, file, or link to your knowledge base</Text>
         </View>
 
+        {/* Tutorial Tip */}
+        <TutorialTip
+          tipKey="capture_intro"
+          icon="plus.circle.fill"
+          iconColor="#00D2D3"
+          title="Quick Capture"
+          message="Choose a capture mode below. You can save text notes, images, documents (PDF, DOCX), web links, or scan physical documents."
+        />
+
         {/* Mode Selector */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
           <View style={styles.modeRow}>
             {MODES.map((m) => (
               <Pressable
                 key={m.key}
-                onPress={() => { setMode(m.key); setSelectedFile(null); setRecordingUri(null); }}
+                onPress={() => handleModeSelect(m.key)}
                 style={({ pressed }) => [
                   styles.modeChip,
                   {
@@ -198,19 +267,13 @@ export default function CaptureScreen() {
                   pressed && { opacity: 0.8 },
                 ]}
               >
-                <IconSymbol
-                  name={m.icon}
-                  size={18}
-                  color={mode === m.key ? "#fff" : colors.muted}
-                />
-                <Text
-                  style={[
-                    styles.modeLabel,
-                    { color: mode === m.key ? "#fff" : colors.muted },
-                  ]}
-                >
+                <IconSymbol name={m.icon} size={18} color={mode === m.key ? "#fff" : colors.muted} />
+                <Text style={[styles.modeLabel, { color: mode === m.key ? "#fff" : colors.muted }]}>
                   {m.label}
                 </Text>
+                {m.proOnly && subscription !== "pro" && (
+                  <IconSymbol name="crown.fill" size={12} color="#FDCB6E" />
+                )}
               </Pressable>
             ))}
           </View>
@@ -224,10 +287,7 @@ export default function CaptureScreen() {
             onChangeText={setTitle}
             placeholder="Give your memory a title..."
             placeholderTextColor={colors.muted}
-            style={[
-              styles.textInput,
-              { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground },
-            ]}
+            style={[styles.textInput, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground }]}
             returnKeyType="done"
           />
         </View>
@@ -244,10 +304,7 @@ export default function CaptureScreen() {
                 placeholderTextColor={colors.muted}
                 multiline
                 textAlignVertical="top"
-                style={[
-                  styles.textArea,
-                  { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground },
-                ]}
+                style={[styles.textArea, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground }]}
               />
             </>
           )}
@@ -255,36 +312,28 @@ export default function CaptureScreen() {
           {mode === "voice" && (
             <View style={[styles.voiceArea, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               {isRecording ? (
-                <View className="items-center gap-3">
+                <View style={styles.centeredContent}>
                   <IconSymbol name="waveform" size={48} color={colors.error} />
-                  <Text style={{ color: colors.foreground, fontSize: 16, fontWeight: "600" }}>Recording...</Text>
-                  <Text style={{ color: colors.muted, fontSize: 13, textAlign: "center" }}>
-                    Voice recording requires the native app. For now, you can type a note about what you would record.
+                  <Text style={[styles.voiceTitle, { color: colors.foreground }]}>Recording...</Text>
+                  <Text style={[styles.voiceHint, { color: colors.muted }]}>
+                    Voice recording requires the native app. For now, type a note about what you would record.
                   </Text>
                   <Pressable
                     onPress={() => setIsRecording(false)}
-                    style={({ pressed }) => [
-                      styles.recordBtn,
-                      { backgroundColor: colors.error },
-                      pressed && { opacity: 0.8 },
-                    ]}
+                    style={({ pressed }) => [styles.recordBtn, { backgroundColor: colors.error }, pressed && { opacity: 0.8 }]}
                   >
                     <Text style={{ color: "#fff", fontWeight: "600" }}>Stop</Text>
                   </Pressable>
                 </View>
               ) : (
-                <View className="items-center gap-3">
+                <View style={styles.centeredContent}>
                   <IconSymbol name="mic.fill" size={48} color={colors.primary} />
-                  <Text style={{ color: colors.muted, fontSize: 14, textAlign: "center" }}>
+                  <Text style={[styles.voiceHint, { color: colors.muted }]}>
                     Tap to start recording a voice memo. Your recording will be transcribed by AI.
                   </Text>
                   <Pressable
                     onPress={handleStartRecording}
-                    style={({ pressed }) => [
-                      styles.recordBtn,
-                      { backgroundColor: colors.primary },
-                      pressed && { opacity: 0.8 },
-                    ]}
+                    style={({ pressed }) => [styles.recordBtn, { backgroundColor: colors.primary }, pressed && { opacity: 0.8 }]}
                   >
                     <IconSymbol name="mic.fill" size={20} color="#fff" />
                     <Text style={{ color: "#fff", fontWeight: "600" }}>Start Recording</Text>
@@ -298,10 +347,7 @@ export default function CaptureScreen() {
                 placeholderTextColor={colors.muted}
                 multiline
                 textAlignVertical="top"
-                style={[
-                  styles.textArea,
-                  { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground, marginTop: 16 },
-                ]}
+                style={[styles.textArea, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground, marginTop: 16 }]}
               />
             </View>
           )}
@@ -310,23 +356,19 @@ export default function CaptureScreen() {
             <View>
               <Pressable
                 onPress={handlePickImage}
-                style={({ pressed }) => [
-                  styles.filePickerArea,
-                  { backgroundColor: colors.surface, borderColor: colors.border },
-                  pressed && { opacity: 0.7 },
-                ]}
+                style={({ pressed }) => [styles.filePickerArea, { backgroundColor: colors.surface, borderColor: colors.border }, pressed && { opacity: 0.7 }]}
               >
                 {selectedFile ? (
-                  <View className="items-center gap-2">
+                  <View style={styles.centeredContent}>
                     <IconSymbol name="checkmark.circle.fill" size={40} color={colors.success} />
-                    <Text style={{ color: colors.foreground, fontWeight: "600" }}>{selectedFile.name}</Text>
-                    <Text style={{ color: colors.muted, fontSize: 13 }}>Tap to change</Text>
+                    <Text style={[styles.fileSelectedName, { color: colors.foreground }]}>{selectedFile.name}</Text>
+                    <Text style={[styles.fileHint, { color: colors.muted }]}>Tap to change</Text>
                   </View>
                 ) : (
-                  <View className="items-center gap-2">
+                  <View style={styles.centeredContent}>
                     <IconSymbol name="photo.fill" size={40} color={colors.primary} />
-                    <Text style={{ color: colors.foreground, fontWeight: "600" }}>Select Image or Screenshot</Text>
-                    <Text style={{ color: colors.muted, fontSize: 13 }}>AI will extract text and key info</Text>
+                    <Text style={[styles.fileSelectedName, { color: colors.foreground }]}>Select Image or Screenshot</Text>
+                    <Text style={[styles.fileHint, { color: colors.muted }]}>AI will extract text and key info</Text>
                   </View>
                 )}
               </Pressable>
@@ -337,10 +379,7 @@ export default function CaptureScreen() {
                 placeholderTextColor={colors.muted}
                 multiline
                 textAlignVertical="top"
-                style={[
-                  styles.textAreaSmall,
-                  { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground, marginTop: 12 },
-                ]}
+                style={[styles.textAreaSmall, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground, marginTop: 12 }]}
               />
             </View>
           )}
@@ -349,26 +388,33 @@ export default function CaptureScreen() {
             <View>
               <Pressable
                 onPress={handlePickDocument}
-                style={({ pressed }) => [
-                  styles.filePickerArea,
-                  { backgroundColor: colors.surface, borderColor: colors.border },
-                  pressed && { opacity: 0.7 },
-                ]}
+                style={({ pressed }) => [styles.filePickerArea, { backgroundColor: colors.surface, borderColor: colors.border }, pressed && { opacity: 0.7 }]}
               >
                 {selectedFile ? (
-                  <View className="items-center gap-2">
+                  <View style={styles.centeredContent}>
                     <IconSymbol name="checkmark.circle.fill" size={40} color={colors.success} />
-                    <Text style={{ color: colors.foreground, fontWeight: "600" }}>{selectedFile.name}</Text>
-                    <Text style={{ color: colors.muted, fontSize: 13 }}>Tap to change</Text>
+                    <Text style={[styles.fileSelectedName, { color: colors.foreground }]}>{selectedFile.name}</Text>
+                    <Text style={[styles.fileHint, { color: colors.muted }]}>Tap to change</Text>
                   </View>
                 ) : (
-                  <View className="items-center gap-2">
+                  <View style={styles.centeredContent}>
                     <IconSymbol name="doc.fill" size={40} color={colors.primary} />
-                    <Text style={{ color: colors.foreground, fontWeight: "600" }}>Select PDF Document</Text>
-                    <Text style={{ color: colors.muted, fontSize: 13 }}>AI will summarize and extract key info</Text>
+                    <Text style={[styles.fileSelectedName, { color: colors.foreground }]}>Select Document</Text>
+                    <Text style={[styles.fileHint, { color: colors.muted }]}>
+                      PDF, DOCX, or PowerPoint — AI will summarize and extract key info
+                    </Text>
                   </View>
                 )}
               </Pressable>
+
+              {/* Document Analysis Hint */}
+              <View style={[styles.hintCard, { backgroundColor: colors.primary + "08", borderColor: colors.primary + "20" }]}>
+                <IconSymbol name="sparkles" size={14} color={colors.primary} />
+                <Text style={[styles.hintText, { color: colors.muted }]}>
+                  Upload contracts, prescriptions, blood reports, or any document. AI will analyze and summarize in simple terms.
+                </Text>
+              </View>
+
               <TextInput
                 value={content}
                 onChangeText={setContent}
@@ -376,10 +422,7 @@ export default function CaptureScreen() {
                 placeholderTextColor={colors.muted}
                 multiline
                 textAlignVertical="top"
-                style={[
-                  styles.textAreaSmall,
-                  { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground, marginTop: 12 },
-                ]}
+                style={[styles.textAreaSmall, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground, marginTop: 12 }]}
               />
             </View>
           )}
@@ -394,10 +437,7 @@ export default function CaptureScreen() {
                 placeholderTextColor={colors.muted}
                 autoCapitalize="none"
                 keyboardType="url"
-                style={[
-                  styles.textInput,
-                  { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground },
-                ]}
+                style={[styles.textInput, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground }]}
                 returnKeyType="done"
               />
               <TextInput
@@ -407,10 +447,7 @@ export default function CaptureScreen() {
                 placeholderTextColor={colors.muted}
                 multiline
                 textAlignVertical="top"
-                style={[
-                  styles.textAreaSmall,
-                  { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground, marginTop: 12 },
-                ]}
+                style={[styles.textAreaSmall, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground, marginTop: 12 }]}
               />
             </View>
           )}
@@ -444,21 +481,17 @@ export default function CaptureScreen() {
 }
 
 const styles = StyleSheet.create({
-  modeRow: {
-    flexDirection: "row",
-    gap: 8,
-    paddingHorizontal: 20,
-  },
+  modeRow: { flexDirection: "row", gap: 8, paddingHorizontal: 20 },
   modeChip: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 24,
     borderWidth: 1,
     gap: 6,
   },
-  modeLabel: { fontSize: 14, fontWeight: "600" },
+  modeLabel: { fontSize: 13, fontWeight: "600" },
   inputLabel: { fontSize: 14, fontWeight: "600", marginBottom: 8 },
   textInput: {
     fontSize: 16,
@@ -489,6 +522,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
   },
+  centeredContent: { alignItems: "center", gap: 8 },
+  voiceTitle: { fontSize: 16, fontWeight: "600" },
+  voiceHint: { fontSize: 14, textAlign: "center" },
   recordBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -504,6 +540,18 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     alignItems: "center",
   },
+  fileSelectedName: { fontWeight: "600" },
+  fileHint: { fontSize: 13, textAlign: "center" },
+  hintCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 8,
+    marginTop: 12,
+  },
+  hintText: { fontSize: 12, lineHeight: 18, flex: 1 },
   saveBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -512,11 +560,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     gap: 8,
   },
-  saveBtnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "700",
-  },
+  saveBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  savedContainer: { alignItems: "center", gap: 12 },
+  savedTitle: { fontSize: 24, fontWeight: "700" },
+  savedSubtitle: { fontSize: 15, textAlign: "center" },
   secondaryBtn: {
     paddingHorizontal: 24,
     paddingVertical: 12,

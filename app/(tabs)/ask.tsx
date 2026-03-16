@@ -6,6 +6,8 @@ import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { StyleSheet } from "react-native";
+import { useAppState } from "@/lib/app-state";
+import { TutorialTip } from "@/components/tutorial-tip";
 
 type Tab = "ask" | "ideas";
 
@@ -75,7 +77,10 @@ export default function AskScreen() {
     }
   }, [ideaPrompt, loading, ideaMutation]);
 
-  if (!isAuthenticated) {
+  const { isGuest } = useAppState();
+  const isLoggedIn = isAuthenticated || isGuest;
+
+  if (!isLoggedIn) {
     return (
       <ScreenContainer className="flex-1 items-center justify-center p-6">
         <IconSymbol name="sparkles" size={48} color={colors.muted} />
@@ -89,6 +94,15 @@ export default function AskScreen() {
       <View className="px-5 pt-4 pb-2">
         <Text className="text-2xl font-bold text-foreground">AI Assistant</Text>
       </View>
+
+      {/* Tutorial Tip */}
+      <TutorialTip
+        tipKey="ask_ai_intro"
+        icon="sparkles"
+        iconColor="#6C5CE7"
+        title="Your AI Knowledge Assistant"
+        message="Ask questions like 'What did I learn about marketing?' or 'Summarize my investing notes.' Generate ideas from your stored knowledge too!"
+      />
 
       {/* Tab Switcher */}
       <View style={styles.tabRow}>

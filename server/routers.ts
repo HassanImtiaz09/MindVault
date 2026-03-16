@@ -225,6 +225,52 @@ export const appRouter = router({
     chatHistory: protectedProcedure
       .input(z.object({ limit: z.number().min(1).max(100).default(50) }).optional())
       .query(({ ctx, input }) => db.getChatHistory(ctx.user.id, input?.limit ?? 50)),
+
+    analyzeDocument: protectedProcedure
+      .input(z.object({ memoryId: z.number(), analysisType: z.enum(["summary", "contract", "medical", "financial", "research"]).default("summary") }))
+      .mutation(async ({ ctx, input }) => {
+        const memory = await db.getMemoryById(input.memoryId);
+        if (!memory) throw new Error("Memory not found");
+        const contextParts: string[] = [];
+        if (memory.aiSummary) contextParts.push(`Summary: ${memory.aiSummary}`);
+        if (memory.content) contextParts.push(`Content: ${memory.content}`);
+        if (memory.aiExtractedText) contextParts.push(`Extracted: ${memory.aiExtractedText}`);
+        const prompts: Record<string, string> = {
+          summary: "Provide a comprehensive, easy-to-understand summary of this document. Use simple language and organize by key sections.",
+          contract: "Analyze this contract/agreement. Identify: key terms, obligations, important dates, potential risks, and anything the user should pay attention to. Use simple, non-legal language.",
+          medical: "Analyze this medical document (prescription, lab report, etc). Explain in simple terms: what it says, what the results mean, any values that are abnormal, and recommended next steps. Note: this is for informational purposes only.",
+          financial: "Analyze this financial document. Break down: key figures, trends, important ratios, and what the numbers mean in simple terms.",
+          research: "Analyze this document for research purposes. Extract: key findings, methodology, data points, conclusions, and how it relates to the broader field.",
+        };
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: `You are MindVault AI, an expert document analyzer. ${prompts[input.analysisType]}` },
+            { role: "user", content: contextParts.join("\n\n").substring(0, 6000) },
+          ],
+        });
+        return { analysis: getContentString(response.choices[0]?.message?.content) || "Analysis could not be generated." };
+      }),
+
+    exportMemory: protectedProcedure
+      .input(z.object({ memoryId: z.number() }))
+      .query(async ({ input }) => {
+        const memory = await db.getMemoryById(input.memoryId);
+        if (!memory) throw new Error("Memory not found");
+        const parts = [
+          `# ${memory.title}`,
+          `**Type:** ${memory.type} | **Date:** ${new Date(memory.createdAt).toLocaleDateString()}`,
+          "",
+        ];
+        if (memory.aiSummary) parts.push(`## AI Summary\n${memory.aiSummary}\n`);
+        if (memory.aiTopics?.length) parts.push(`## Topics\n${memory.aiTopics.map(t => `- ${t}`).join("\n")}\n`);
+        if (memory.aiKeyInsights?.length) parts.push(`## Key Insights\n${memory.aiKeyInsights.map(i => `- ${i}`).join("\n")}\n`);
+        if (memory.aiTranscription) parts.push(`## Transcription\n${memory.aiTranscription}\n`);
+        if (memory.aiExtractedText) parts.push(`## Extracted Text\n${memory.aiExtractedText}\n`);
+        if (memory.content) parts.push(`## Original Content\n${memory.content}\n`);
+        if (memory.sourceUrl) parts.push(`## Source\n${memory.sourceUrl}\n`);
+        parts.push("\n---\n*Exported from MindVault*");
+        return { markdown: parts.join("\n") };
+      }),
   }),
 
   knowledge: router({

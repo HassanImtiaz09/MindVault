@@ -1,11 +1,12 @@
-import { useState } from "react";
-import { ScrollView, Text, View, Pressable, ActivityIndicator, Alert } from "react-native";
+import { useState, useEffect, useCallback } from "react";
+import { ScrollView, Text, View, Pressable, ActivityIndicator, Alert, Share, Platform, StyleSheet } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { trpc } from "@/lib/trpc";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { StyleSheet } from "react-native";
+import { useAppState } from "@/lib/app-state";
+import { loadFolders, saveFolders, Folder } from "../folders";
 
 const TYPE_META: Record<string, { icon: any; color: string; label: string }> = {
   text: { icon: "text.alignleft", color: "#6C5CE7", label: "Text Note" },
@@ -21,10 +22,18 @@ export default function MemoryDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const memoryId = parseInt(id || "0", 10);
   const [deleting, setDeleting] = useState(false);
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const { isFavorite, toggleFavorite, canUseFeature } = useAppState();
 
   const memoryQuery = trpc.memories.get.useQuery({ id: memoryId }, { enabled: memoryId > 0 });
   const deleteMutation = trpc.memories.delete.useMutation();
   const utils = trpc.useUtils();
+
+  useEffect(() => {
+    loadFolders().then(setFolders);
+  }, []);
+
+  const fav = isFavorite(memoryId);
 
   const handleDelete = () => {
     Alert.alert("Delete Memory", "Are you sure you want to delete this memory?", [
@@ -48,6 +57,56 @@ export default function MemoryDetailScreen() {
       },
     ]);
   };
+
+  const handleShare = useCallback(async () => {
+    const memory = memoryQuery.data;
+    if (!memory) return;
+    const shareContent = [
+      memory.title,
+      "",
+      memory.aiSummary ? `Summary: ${memory.aiSummary}` : "",
+      memory.content ? `\nContent:\n${memory.content}` : "",
+      memory.aiKeyInsights?.length ? `\nKey Insights:\n${memory.aiKeyInsights.map((i) => `• ${i}`).join("\n")}` : "",
+      memory.sourceUrl ? `\nSource: ${memory.sourceUrl}` : "",
+      "\n— Shared from MindVault",
+    ].filter(Boolean).join("\n");
+
+    try {
+      await Share.share({
+        message: shareContent,
+        title: memory.title,
+      });
+    } catch {}
+  }, [memoryQuery.data]);
+
+  const handleAddToFolder = useCallback(async () => {
+    if (folders.length === 0) {
+      Alert.alert("No Folders", "Create a folder first to organize your memories.", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Create Folder", onPress: () => router.push("/folders" as any) },
+      ]);
+      return;
+    }
+    const buttons = folders.map((f) => ({
+      text: f.name,
+      onPress: async () => {
+        const allFolders = await loadFolders();
+        const idx = allFolders.findIndex((fo) => fo.id === f.id);
+        if (idx >= 0) {
+          if (!allFolders[idx].memoryIds.includes(memoryId)) {
+            allFolders[idx].memoryIds.push(memoryId);
+            await saveFolders(allFolders);
+            setFolders(allFolders);
+            Alert.alert("Added", `Memory added to "${f.name}"`);
+          } else {
+            Alert.alert("Already in Folder", `This memory is already in "${f.name}"`);
+          }
+        }
+      },
+    }));
+    buttons.push({ text: "Cancel", onPress: async () => {} });
+    Alert.alert("Add to Folder", "Select a folder:", buttons);
+  }, [folders, memoryId, router]);
 
   if (memoryQuery.isLoading) {
     return (
@@ -87,21 +146,43 @@ export default function MemoryDetailScreen() {
           <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
         </Pressable>
         <View style={{ flex: 1 }} />
-        <Pressable onPress={handleDelete} disabled={deleting} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
-          {deleting ? (
-            <ActivityIndicator size="small" color={colors.error} />
-          ) : (
-            <IconSymbol name="trash.fill" size={20} color={colors.error} />
-          )}
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable onPress={() => toggleFavorite(memoryId)} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
+            <IconSymbol name={fav ? "star.fill" : "star"} size={22} color={fav ? "#FDCB6E" : colors.muted} />
+          </Pressable>
+          <Pressable onPress={handleAddToFolder} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
+            <IconSymbol name="folder.badge.plus" size={22} color={colors.primary} />
+          </Pressable>
+          <Pressable onPress={() => router.push(`/analyze?memoryId=${memoryId}` as any)} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
+            <IconSymbol name="doc.text.magnifyingglass" size={20} color={colors.primary} />
+          </Pressable>
+          <Pressable onPress={handleShare} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
+            <IconSymbol name="square.and.arrow.up" size={20} color={colors.primary} />
+          </Pressable>
+          <Pressable onPress={handleDelete} disabled={deleting} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
+            {deleting ? (
+              <ActivityIndicator size="small" color={colors.error} />
+            ) : (
+              <IconSymbol name="trash.fill" size={20} color={colors.error} />
+            )}
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Type Badge & Title */}
         <View className="px-5 pt-4">
-          <View style={[styles.typeBadge, { backgroundColor: typeMeta.color + "18" }]}>
-            <IconSymbol name={typeMeta.icon} size={14} color={typeMeta.color} />
-            <Text style={{ color: typeMeta.color, fontSize: 12, fontWeight: "600" }}>{typeMeta.label}</Text>
+          <View style={styles.badgeRow}>
+            <View style={[styles.typeBadge, { backgroundColor: typeMeta.color + "18" }]}>
+              <IconSymbol name={typeMeta.icon} size={14} color={typeMeta.color} />
+              <Text style={{ color: typeMeta.color, fontSize: 12, fontWeight: "600" }}>{typeMeta.label}</Text>
+            </View>
+            {fav && (
+              <View style={[styles.typeBadge, { backgroundColor: "#FDCB6E" + "18" }]}>
+                <IconSymbol name="star.fill" size={12} color="#FDCB6E" />
+                <Text style={{ color: "#FDCB6E", fontSize: 12, fontWeight: "600" }}>Favorite</Text>
+              </View>
+            )}
           </View>
           <Text style={[styles.title, { color: colors.foreground }]}>{memory.title}</Text>
           <Text style={[styles.date, { color: colors.muted }]}>{dateStr}</Text>
@@ -209,9 +290,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 0.5,
   },
-  backBtn: {
-    padding: 4,
+  backBtn: { padding: 4 },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
   },
+  badgeRow: { flexDirection: "row", gap: 8, marginBottom: 10 },
   typeBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -220,17 +305,9 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 12,
     gap: 5,
-    marginBottom: 10,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    lineHeight: 30,
-  },
-  date: {
-    fontSize: 13,
-    marginTop: 6,
-  },
+  title: { fontSize: 24, fontWeight: "700", lineHeight: 30 },
+  date: { fontSize: 13, marginTop: 6 },
   processingBanner: {
     flexDirection: "row",
     alignItems: "center",
@@ -240,64 +317,16 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 10,
   },
-  aiCard: {
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  aiCardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 8,
-  },
-  aiCardTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-  },
-  aiCardText: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  sectionLabel: {
-    fontSize: 15,
-    fontWeight: "700",
-    marginBottom: 10,
-  },
-  topicRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  topicChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-  },
-  insightRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 10,
-    marginBottom: 8,
-  },
-  insightDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginTop: 6,
-  },
-  insightText: {
-    fontSize: 14,
-    lineHeight: 20,
-    flex: 1,
-  },
-  contentBox: {
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  contentText: {
-    fontSize: 14,
-    lineHeight: 21,
-  },
+  aiCard: { padding: 16, borderRadius: 14, borderWidth: 1 },
+  aiCardHeader: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 },
+  aiCardTitle: { fontSize: 14, fontWeight: "700" },
+  aiCardText: { fontSize: 15, lineHeight: 22 },
+  sectionLabel: { fontSize: 15, fontWeight: "700", marginBottom: 10 },
+  topicRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  topicChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20 },
+  insightRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 8 },
+  insightDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6 },
+  insightText: { fontSize: 14, lineHeight: 20, flex: 1 },
+  contentBox: { padding: 14, borderRadius: 12, borderWidth: 1 },
+  contentText: { fontSize: 14, lineHeight: 21 },
 });

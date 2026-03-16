@@ -1,12 +1,13 @@
 import { useState, useCallback } from "react";
-import { Text, View, TextInput, Pressable, ActivityIndicator, FlatList, RefreshControl } from "react-native";
+import { Text, View, TextInput, Pressable, ActivityIndicator, FlatList, RefreshControl, StyleSheet } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { useRouter } from "expo-router";
-import { StyleSheet } from "react-native";
+import { useAppState } from "@/lib/app-state";
+import { TutorialTip } from "@/components/tutorial-tip";
 
 const TYPE_ICONS: Record<string, { icon: any; color: string }> = {
   text: { icon: "text.alignleft", color: "#6C5CE7" },
@@ -18,6 +19,7 @@ const TYPE_ICONS: Record<string, { icon: any; color: string }> = {
 
 const FILTERS = [
   { key: "all", label: "All" },
+  { key: "favorites", label: "Favorites", icon: "star.fill" as const },
   { key: "text", label: "Notes" },
   { key: "image", label: "Images" },
   { key: "voice", label: "Voice" },
@@ -29,13 +31,16 @@ export default function LibraryScreen() {
   const colors = useColors();
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const { isGuest, favorites, isFavorite, toggleFavorite } = useAppState();
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
 
+  const isLoggedIn = isAuthenticated || isGuest;
+
   const memoriesQuery = trpc.memories.list.useQuery(
     {
-      type: activeFilter !== "all" ? activeFilter : undefined,
+      type: activeFilter !== "all" && activeFilter !== "favorites" ? activeFilter : undefined,
       search: search.trim() || undefined,
       limit: 50,
     },
@@ -48,7 +53,7 @@ export default function LibraryScreen() {
     setRefreshing(false);
   }, [memoriesQuery]);
 
-  if (!isAuthenticated) {
+  if (!isLoggedIn) {
     return (
       <ScreenContainer className="flex-1 items-center justify-center p-6">
         <IconSymbol name="book.fill" size={48} color={colors.muted} />
@@ -57,7 +62,10 @@ export default function LibraryScreen() {
     );
   }
 
-  const memories = memoriesQuery.data || [];
+  let memories = memoriesQuery.data || [];
+  if (activeFilter === "favorites") {
+    memories = memories.filter((m) => favorites.includes(m.id));
+  }
 
   const renderItem = useCallback(({ item }: { item: any }) => {
     const typeInfo = TYPE_ICONS[item.type] || TYPE_ICONS.text;
@@ -65,12 +73,13 @@ export default function LibraryScreen() {
       month: "short",
       day: "numeric",
     });
+    const fav = favorites.includes(item.id);
     return (
       <Pressable
         onPress={() => router.push(`/memory/${item.id}` as any)}
         style={({ pressed }) => [
           styles.memoryCard,
-          { backgroundColor: colors.surface, borderColor: colors.border },
+          { backgroundColor: colors.surface, borderColor: fav ? "#FDCB6E40" : colors.border },
           pressed && { opacity: 0.7 },
         ]}
       >
@@ -82,7 +91,10 @@ export default function LibraryScreen() {
             <Text style={[styles.cardTitle, { color: colors.foreground }]} numberOfLines={1}>
               {item.title}
             </Text>
-            <Text style={[styles.cardDate, { color: colors.muted }]}>{dateStr}</Text>
+            <View style={styles.cardMeta}>
+              {fav && <IconSymbol name="star.fill" size={12} color="#FDCB6E" />}
+              <Text style={[styles.cardDate, { color: colors.muted }]}>{dateStr}</Text>
+            </View>
           </View>
           <Text style={[styles.cardSummary, { color: colors.muted }]} numberOfLines={2}>
             {item.aiSummary || item.content || "Processing..."}
@@ -100,16 +112,31 @@ export default function LibraryScreen() {
         {!item.processed && <ActivityIndicator size="small" color={colors.primary} />}
       </Pressable>
     );
-  }, [colors, router]);
+  }, [colors, router, favorites]);
 
   return (
     <ScreenContainer>
-      <View className="px-5 pt-4 pb-2">
-        <Text className="text-2xl font-bold text-foreground">Library</Text>
+      <View style={styles.headerRow}>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Library</Text>
+        <Pressable
+          onPress={() => router.push("/folders" as any)}
+          style={({ pressed }) => [styles.folderBtn, { backgroundColor: colors.surface }, pressed && { opacity: 0.7 }]}
+        >
+          <IconSymbol name="folder.fill" size={18} color={colors.primary} />
+        </Pressable>
       </View>
 
+      {/* Tutorial Tip */}
+      <TutorialTip
+        tipKey="library_search"
+        icon="magnifyingglass"
+        iconColor="#00B894"
+        title="Search Your Knowledge"
+        message="Use the search bar to find memories by title, content, or AI-extracted topics. Filter by type or view your favorites."
+      />
+
       {/* Search Bar */}
-      <View style={[styles.searchContainer, { marginHorizontal: 20 }]}>
+      <View style={{ marginHorizontal: 20, marginTop: 4 }}>
         <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <IconSymbol name="magnifyingglass" size={18} color={colors.muted} />
           <TextInput
@@ -143,6 +170,9 @@ export default function LibraryScreen() {
               pressed && { opacity: 0.8 },
             ]}
           >
+            {"icon" in f && f.icon && (
+              <IconSymbol name={f.icon} size={12} color={activeFilter === f.key ? "#fff" : "#FDCB6E"} />
+            )}
             <Text
               style={{
                 fontSize: 13,
@@ -173,12 +203,22 @@ export default function LibraryScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <IconSymbol name="magnifyingglass" size={40} color={colors.muted} />
+              <IconSymbol
+                name={activeFilter === "favorites" ? "star" : "magnifyingglass"}
+                size={40}
+                color={colors.muted}
+              />
               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
-                {search ? "No results found" : "No memories yet"}
+                {activeFilter === "favorites"
+                  ? "No favorites yet"
+                  : search
+                  ? "No results found"
+                  : "No memories yet"}
               </Text>
               <Text style={[styles.emptySubtitle, { color: colors.muted }]}>
-                {search
+                {activeFilter === "favorites"
+                  ? "Star memories to find them quickly here"
+                  : search
                   ? "Try different keywords or filters"
                   : "Start capturing notes, images, and links"}
               </Text>
@@ -191,7 +231,22 @@ export default function LibraryScreen() {
 }
 
 const styles = StyleSheet.create({
-  searchContainer: { marginTop: 8 },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 4,
+  },
+  headerTitle: { fontSize: 24, fontWeight: "700" },
+  folderBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -208,12 +263,16 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 8,
     gap: 8,
+    flexWrap: "wrap",
   },
   filterChip: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
+    gap: 4,
   },
   memoryCard: {
     flexDirection: "row",
@@ -237,6 +296,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cardTitle: { fontSize: 15, fontWeight: "600", flex: 1, marginRight: 8 },
+  cardMeta: { flexDirection: "row", alignItems: "center", gap: 4 },
   cardDate: { fontSize: 12 },
   cardSummary: { fontSize: 13, marginTop: 3, lineHeight: 18 },
   tagRow: { flexDirection: "row", gap: 6, marginTop: 6 },

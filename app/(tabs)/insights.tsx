@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { StyleSheet } from "react-native";
 import { KnowledgeGraphView } from "@/components/knowledge-graph";
+import { useAppState } from "@/lib/app-state";
+import { TutorialTip } from "@/components/tutorial-tip";
 
 type InsightTab = "summary" | "graph";
 
@@ -26,7 +28,10 @@ export default function InsightsScreen() {
     setRefreshing(false);
   }, [summaryQuery, statsQuery, graphQuery]);
 
-  if (!isAuthenticated) {
+  const { isGuest } = useAppState();
+  const isLoggedIn = isAuthenticated || isGuest;
+
+  if (!isLoggedIn) {
     return (
       <ScreenContainer className="flex-1 items-center justify-center p-6">
         <IconSymbol name="chart.bar.fill" size={48} color={colors.muted} />
@@ -44,6 +49,15 @@ export default function InsightsScreen() {
       <View className="px-5 pt-4 pb-2">
         <Text className="text-2xl font-bold text-foreground">Insights</Text>
       </View>
+
+      {/* Tutorial Tip */}
+      <TutorialTip
+        tipKey="insights_intro"
+        icon="chart.bar.fill"
+        iconColor="#00D2D3"
+        title="Weekly Knowledge Insights"
+        message="Get AI-generated weekly summaries of your knowledge, discover recurring themes, and visualize connections between topics in the knowledge graph."
+      />
 
       {/* Tab Switcher */}
       <View style={styles.tabRow}>
