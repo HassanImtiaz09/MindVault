@@ -1,8 +1,8 @@
 import { ScrollView, Text, View, Pressable, StyleSheet } from "react-native";
-import { GlassScreen, GlassCard } from "@/components/glass-screen";
+import { CinematicScreen, GoldenCard } from "@/components/screen-background";
 import { useColorScheme } from "@/hooks/use-color-scheme";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
 import { useRouter } from "expo-router";
 import { useState } from "react";
 
@@ -66,7 +66,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
     ],
   },
   {
-    icon: "doc.text.fill",
+    icon: "article" as any,
     iconColor: "#00B894",
     title: "Generating Reports",
     content: [
@@ -103,7 +103,7 @@ const GUIDE_SECTIONS: GuideSection[] = [
     ],
   },
   {
-    icon: "chart.bar.fill",
+    icon: "bar-chart" as any,
     iconColor: "#00D2D3",
     title: "Weekly Summaries & Insights",
     content: [
@@ -175,25 +175,24 @@ const GUIDE_SECTIONS: GuideSection[] = [
 ];
 
 export default function GuideScreen() {
-  const colors = useColors();
   const router = useRouter();
   const [expandedIndex, setExpandedIndex] = useState<number | null>(0);
 
   return (
-    <GlassScreen screenName="detail" edges={["top", "bottom", "left", "right"]}>
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+    <CinematicScreen screenName="detail" edges={["top", "bottom", "left", "right"]}>
+      <View style={[styles.header, { borderBottomColor: "rgba(255,215,0,0.12)" }]}>
         <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
-          <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
+          <MaterialIcons name={"arrow-back" as any} size={22} color={"#FFFFFF"} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>User Guide</Text>
+        <Text style={[styles.headerTitle, { color: "#FFFFFF" }]}>User Guide</Text>
         <View style={{ width: 30 }} />
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={styles.intro}>
-          <IconSymbol name="questionmark.circle.fill" size={36} color={colors.primary} />
-          <Text style={[styles.introTitle, { color: colors.foreground }]}>How to Use MindVault</Text>
-          <Text style={[styles.introSubtitle, { color: colors.muted }]}>
+          <MaterialIcons name={"help" as any} size={36} color={"#FFD700"} />
+          <Text style={[styles.introTitle, { color: "#FFFFFF" }]}>How to Use MindVault</Text>
+          <Text style={[styles.introSubtitle, { color: "rgba(255,255,255,0.4)" }]}>
             Tap any section below to learn more about each feature
           </Text>
         </View>
@@ -207,28 +206,28 @@ export default function GuideScreen() {
                 style={({ pressed }) => [
                   styles.sectionHeader,
                   {
-                    backgroundColor: colors.surface,
-                    borderColor: isExpanded ? colors.primary : colors.border,
+                    backgroundColor: "rgba(255,255,255,0.04)",
+                    borderColor: isExpanded ? "#FFD700" : "rgba(255,215,0,0.12)",
                     borderWidth: isExpanded ? 1.5 : 1,
                   },
                   pressed && { opacity: 0.8 },
                 ]}
               >
                 <View style={[styles.sectionIcon, { backgroundColor: section.iconColor + "18" }]}>
-                  <IconSymbol name={section.icon} size={20} color={section.iconColor} />
+                  <MaterialIcons name={section.icon} size={20} color={section.iconColor} />
                 </View>
-                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{section.title}</Text>
-                <IconSymbol
-                  name={isExpanded ? "chevron.right" : "chevron.right"}
+                <Text style={[styles.sectionTitle, { color: "#FFFFFF" }]}>{section.title}</Text>
+                <MaterialIcons
+                  name={isExpanded ? ("expand-less" as any) : ("expand-more" as any)}
                   size={16}
-                  color={colors.muted}
+                  color={"rgba(255,255,255,0.4)"}
                   style={{ transform: [{ rotate: isExpanded ? "90deg" : "0deg" }] }}
                 />
               </Pressable>
               {isExpanded && (
-                <View style={[styles.sectionContent, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <View style={[styles.sectionContent, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
                   {section.content.map((line, i) => (
-                    <Text key={i} style={[styles.contentLine, { color: colors.foreground }]}>
+                    <Text key={i} style={[styles.contentLine, { color: "#FFFFFF" }]}>
                       {line}
                     </Text>
                   ))}
@@ -238,7 +237,7 @@ export default function GuideScreen() {
           );
         })}
       </ScrollView>
-    </GlassScreen>
+    </CinematicScreen>
   );
 }
 

@@ -1,8 +1,8 @@
 import { useState, useCallback } from "react";
 import { View, Text, Pressable, ActivityIndicator, Alert, StyleSheet, ScrollView } from "react-native";
-import { GlassScreen, GlassCard } from "@/components/glass-screen";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
+import { CinematicScreen, GoldenCard } from "@/components/screen-background";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
 import { useAppState } from "@/lib/app-state";
 import { trpc } from "@/lib/trpc";
 import { useRouter } from "expo-router";
@@ -11,7 +11,6 @@ type ExportFormat = "markdown" | "json";
 type TimeRange = "all" | "week" | "month" | "year";
 
 export default function ExportScreen() {
-  const colors = useColors();
   const router = useRouter();
   const { canUseFeature } = useAppState();
   const [format, setFormat] = useState<ExportFormat>("markdown");
@@ -90,24 +89,24 @@ export default function ExportScreen() {
   const memoryCount = memoriesQuery.data?.length ?? 0;
 
   return (
-    <GlassScreen screenName="detail" edges={["top", "bottom", "left", "right"]}>
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+    <CinematicScreen screenName="detail" edges={["top", "bottom", "left", "right"]}>
+      <View style={[styles.header, { borderBottomColor: "rgba(255,215,0,0.12)" }]}>
         <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
-          <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
+          <MaterialIcons name={"arrow-back" as any} size={22} color={"#FFFFFF"} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Export & Backup</Text>
+        <Text style={[styles.headerTitle, { color: "#FFFFFF" }]}>Export & Backup</Text>
         <View style={{ width: 30 }} />
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, gap: 20 }}>
         {/* Info Card */}
-        <View style={[styles.infoCard, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}>
-          <IconSymbol name="archivebox.fill" size={28} color={colors.primary} />
+        <View style={[styles.infoCard, { backgroundColor: "#FFD700" + "10", borderColor: "#FFD700" + "30" }]}>
+          <MaterialIcons name={"inventory" as any} size={28} color={"#FFD700"} />
           <View style={{ flex: 1 }}>
-            <Text style={[styles.infoTitle, { color: colors.foreground }]}>
+            <Text style={[styles.infoTitle, { color: "#FFFFFF" }]}>
               Export Your Knowledge
             </Text>
-            <Text style={[styles.infoText, { color: colors.muted }]}>
+            <Text style={[styles.infoText, { color: "rgba(255,255,255,0.4)" }]}>
               Download your entire knowledge base as Markdown or JSON files for offline backup or migration.
             </Text>
           </View>
@@ -115,25 +114,25 @@ export default function ExportScreen() {
 
         {/* Stats */}
         <View style={[styles.statsRow]}>
-          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.statNum, { color: colors.primary }]}>{memoryCount}</Text>
-            <Text style={[styles.statLabel, { color: colors.muted }]}>Memories</Text>
+          <View style={[styles.statCard, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
+            <Text style={[styles.statNum, { color: "#FFD700" }]}>{memoryCount}</Text>
+            <Text style={[styles.statLabel, { color: "rgba(255,255,255,0.4)" }]}>Memories</Text>
           </View>
-          <View style={[styles.statCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.statNum, { color: colors.accent }]}>
+          <View style={[styles.statCard, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
+            <Text style={[styles.statNum, { color: "#FFD700" }]}>
               {format === "markdown" ? ".md" : ".json"}
             </Text>
-            <Text style={[styles.statLabel, { color: colors.muted }]}>Format</Text>
+            <Text style={[styles.statLabel, { color: "rgba(255,255,255,0.4)" }]}>Format</Text>
           </View>
         </View>
 
         {/* Format Selection */}
         <View>
-          <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Export Format</Text>
+          <Text style={[styles.sectionLabel, { color: "#FFFFFF" }]}>Export Format</Text>
           <View style={styles.optionRow}>
             {([
-              { key: "markdown" as const, label: "Markdown", icon: "doc.text.fill" as const, desc: "Human-readable, great for notes apps" },
-              { key: "json" as const, label: "JSON", icon: "chevron.left.forwardslash.chevron.right" as const, desc: "Structured data, great for imports" },
+              { key: "markdown" as const, label: "Markdown", icon: "article" as any, desc: "Human-readable, great for notes apps" },
+              { key: "json" as const, label: "JSON", icon: "code" as any, desc: "Structured data, great for imports" },
             ]).map((opt) => (
               <Pressable
                 key={opt.key}
@@ -141,17 +140,17 @@ export default function ExportScreen() {
                 style={({ pressed }) => [
                   styles.optionCard,
                   {
-                    backgroundColor: format === opt.key ? colors.primary + "10" : colors.surface,
-                    borderColor: format === opt.key ? colors.primary : colors.border,
+                    backgroundColor: format === opt.key ? "#FFD700" + "10" : "rgba(255,255,255,0.04)",
+                    borderColor: format === opt.key ? "#FFD700" : "rgba(255,215,0,0.12)",
                   },
                   pressed && { opacity: 0.8 },
                 ]}
               >
-                <IconSymbol name={opt.icon} size={22} color={format === opt.key ? colors.primary : colors.muted} />
-                <Text style={[styles.optionLabel, { color: format === opt.key ? colors.primary : colors.foreground }]}>
+                <MaterialIcons name={opt.icon} size={22} color={format === opt.key ? "#FFD700" : "rgba(255,255,255,0.4)"} />
+                <Text style={[styles.optionLabel, { color: format === opt.key ? "#FFD700" : "#FFFFFF" }]}>
                   {opt.label}
                 </Text>
-                <Text style={[styles.optionDesc, { color: colors.muted }]}>{opt.desc}</Text>
+                <Text style={[styles.optionDesc, { color: "rgba(255,255,255,0.4)" }]}>{opt.desc}</Text>
               </Pressable>
             ))}
           </View>
@@ -159,7 +158,7 @@ export default function ExportScreen() {
 
         {/* Time Range */}
         <View>
-          <Text style={[styles.sectionLabel, { color: colors.foreground }]}>Time Range</Text>
+          <Text style={[styles.sectionLabel, { color: "#FFFFFF" }]}>Time Range</Text>
           <View style={styles.timeRow}>
             {([
               { key: "all" as const, label: "All Time" },
@@ -173,8 +172,8 @@ export default function ExportScreen() {
                 style={({ pressed }) => [
                   styles.timeChip,
                   {
-                    backgroundColor: timeRange === opt.key ? colors.primary : colors.surface,
-                    borderColor: timeRange === opt.key ? colors.primary : colors.border,
+                    backgroundColor: timeRange === opt.key ? "#FFD700" : "rgba(255,255,255,0.04)",
+                    borderColor: timeRange === opt.key ? "#FFD700" : "rgba(255,215,0,0.12)",
                   },
                   pressed && { opacity: 0.8 },
                 ]}
@@ -183,7 +182,7 @@ export default function ExportScreen() {
                   style={{
                     fontSize: 13,
                     fontWeight: "600",
-                    color: timeRange === opt.key ? "#fff" : colors.muted,
+                    color: timeRange === opt.key ? "#fff" : "rgba(255,255,255,0.4)",
                   }}
                 >
                   {opt.label}
@@ -199,7 +198,7 @@ export default function ExportScreen() {
           disabled={exporting}
           style={({ pressed }) => [
             styles.exportBtn,
-            { backgroundColor: colors.primary },
+            { backgroundColor: "#FFD700" },
             pressed && { opacity: 0.9, transform: [{ scale: 0.97 }] },
             exporting && { opacity: 0.6 },
           ]}
@@ -208,7 +207,7 @@ export default function ExportScreen() {
             <ActivityIndicator color="#fff" />
           ) : (
             <>
-              <IconSymbol name="square.and.arrow.down" size={20} color="#fff" />
+              <MaterialIcons name={"download" as any} size={20} color="#fff" />
               <Text style={styles.exportBtnText}>
                 {exported ? "Export Again" : "Export Knowledge Base"}
               </Text>
@@ -217,15 +216,15 @@ export default function ExportScreen() {
         </Pressable>
 
         {exported && (
-          <View style={[styles.successCard, { backgroundColor: colors.success + "10", borderColor: colors.success + "30" }]}>
-            <IconSymbol name="checkmark.circle.fill" size={20} color={colors.success} />
-            <Text style={[styles.successText, { color: colors.success }]}>
+          <View style={[styles.successCard, { backgroundColor: "#81C784" + "10", borderColor: "#81C784" + "30" }]}>
+            <MaterialIcons name={"check-circle" as any} size={20} color={"#81C784"} />
+            <Text style={[styles.successText, { color: "#81C784" }]}>
               Export completed successfully!
             </Text>
           </View>
         )}
       </ScrollView>
-    </GlassScreen>
+    </CinematicScreen>
   );
 }
 

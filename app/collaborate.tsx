@@ -3,8 +3,8 @@ import { View, Text, Pressable, FlatList, TextInput, StyleSheet, Platform, Image
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useAppState } from "@/lib/app-state";
 import { useRouter, useLocalSearchParams } from "expo-router";
@@ -12,7 +12,6 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 const BG = require("@/assets/images/backgrounds/folders.jpg");
 
 export default function CollaborateScreen() {
-  const colors = useColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const router = useRouter();
@@ -54,11 +53,11 @@ export default function CollaborateScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
-            <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
+            <MaterialIcons name={"arrow-back" as any} size={22} color={"#FFFFFF"} />
           </Pressable>
           <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={[styles.headerTitle, { color: colors.foreground }]}>Share Folder</Text>
-            <Text style={{ color: colors.muted, fontSize: 13 }}>{folderName}</Text>
+            <Text style={[styles.headerTitle, { color: "#FFFFFF" }]}>Share Folder</Text>
+            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>{folderName}</Text>
           </View>
         </View>
 
@@ -67,9 +66,9 @@ export default function CollaborateScreen() {
           <View style={[styles.addCard, { backgroundColor: cardBg, borderColor: "#00C9A7" + "30" }]}>
             <Text style={[styles.addTitle, { color: "#00C9A7" }]}>Invite Collaborator</Text>
             <TextInput
-              style={[styles.input, { color: colors.foreground, borderColor: cardBorder, backgroundColor: isDark ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.5)" }]}
+              style={[styles.input, { color: "#FFFFFF", borderColor: cardBorder, backgroundColor: isDark ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.5)" }]}
               placeholder="Email address..."
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={"rgba(255,255,255,0.4)"}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -85,8 +84,8 @@ export default function CollaborateScreen() {
                   pressed && { opacity: 0.7 },
                 ]}
               >
-                <IconSymbol name="eye.fill" size={16} color={role === "viewer" ? "#00C9A7" : colors.muted} />
-                <Text style={{ color: role === "viewer" ? "#00C9A7" : colors.muted, fontWeight: "600", fontSize: 13 }}>Viewer</Text>
+                <MaterialIcons name={"visibility" as any} size={16} color={role === "viewer" ? "#00C9A7" : "rgba(255,255,255,0.4)"} />
+                <Text style={{ color: role === "viewer" ? "#00C9A7" : "rgba(255,255,255,0.4)", fontWeight: "600", fontSize: 13 }}>Viewer</Text>
               </Pressable>
               <Pressable
                 onPress={() => setRole("editor")}
@@ -96,21 +95,21 @@ export default function CollaborateScreen() {
                   pressed && { opacity: 0.7 },
                 ]}
               >
-                <IconSymbol name="pencil" size={16} color={role === "editor" ? "#D4A017" : colors.muted} />
-                <Text style={{ color: role === "editor" ? "#D4A017" : colors.muted, fontWeight: "600", fontSize: 13 }}>Editor</Text>
+                <MaterialIcons name={"edit" as any} size={16} color={role === "editor" ? "#D4A017" : "rgba(255,255,255,0.4)"} />
+                <Text style={{ color: role === "editor" ? "#D4A017" : "rgba(255,255,255,0.4)", fontWeight: "600", fontSize: 13 }}>Editor</Text>
               </Pressable>
             </View>
             <Pressable
               onPress={handleAdd}
               style={({ pressed }) => [styles.inviteBtn, { backgroundColor: "#00C9A7" }, pressed && { opacity: 0.9 }]}
             >
-              <IconSymbol name="person.badge.plus" size={18} color="#fff" />
+              <MaterialIcons name={"person-add" as any} size={18} color="#fff" />
               <Text style={{ color: "#fff", fontWeight: "700" }}>Send Invite</Text>
             </Pressable>
           </View>
 
           {/* Collaborators list */}
-          <Text style={[styles.sectionLabel, { color: colors.muted }]}>
+          <Text style={[styles.sectionLabel, { color: "rgba(255,255,255,0.4)" }]}>
             {collaborators.length} collaborator{collaborators.length !== 1 ? "s" : ""}
           </Text>
 
@@ -120,9 +119,9 @@ export default function CollaborateScreen() {
             contentContainerStyle={{ gap: 8 }}
             ListEmptyComponent={
               <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-                <IconSymbol name="person.2.fill" size={36} color="#00C9A7" />
-                <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No Collaborators</Text>
-                <Text style={[styles.emptySubtitle, { color: colors.muted }]}>
+                <MaterialIcons name={"group" as any} size={36} color="#00C9A7" />
+                <Text style={[styles.emptyTitle, { color: "#FFFFFF" }]}>No Collaborators</Text>
+                <Text style={[styles.emptySubtitle, { color: "rgba(255,255,255,0.4)" }]}>
                   Invite team members to view or edit this folder's contents together.
                 </Text>
               </View>
@@ -135,7 +134,7 @@ export default function CollaborateScreen() {
                   </Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.collabEmail, { color: colors.foreground }]}>{item.email}</Text>
+                  <Text style={[styles.collabEmail, { color: "#FFFFFF" }]}>{item.email}</Text>
                   <View style={[styles.roleBadge, { backgroundColor: item.role === "editor" ? "#D4A017" + "15" : "#00C9A7" + "15" }]}>
                     <Text style={{ color: item.role === "editor" ? "#D4A017" : "#00C9A7", fontSize: 11, fontWeight: "600" }}>
                       {item.role.charAt(0).toUpperCase() + item.role.slice(1)}
@@ -146,7 +145,7 @@ export default function CollaborateScreen() {
                   onPress={() => removeCollaborator(folderId, item.email)}
                   style={({ pressed }) => [pressed && { opacity: 0.5 }]}
                 >
-                  <IconSymbol name="xmark.circle.fill" size={22} color={colors.muted} />
+                  <MaterialIcons name={"cancel" as any} size={22} color={"rgba(255,255,255,0.4)"} />
                 </Pressable>
               </View>
             )}

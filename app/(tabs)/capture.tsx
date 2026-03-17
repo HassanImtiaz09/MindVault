@@ -1,347 +1,248 @@
 import { useState, useCallback } from "react";
 import { ScrollView, Text, View, TextInput, Pressable, ActivityIndicator, Alert, Platform, StyleSheet } from "react-native";
-import { GlassScreen, GlassCard } from "@/components/glass-screen";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
+import { CinematicScreen, GoldenCard } from "@/components/screen-background";
+import { GoldenText } from "@/components/golden-text";
+import { GoldenButton } from "@/components/golden-button";
+import { TooltipBubble } from "@/components/tooltip-bubble";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import { useAppState } from "@/lib/app-state";
-import { TutorialTip } from "@/components/tutorial-tip";
 import { useRouter } from "expo-router";
 
 type CaptureMode = "text" | "voice" | "image" | "document" | "link" | "scan";
 
-const MODES: { key: CaptureMode; label: string; icon: any; proOnly?: boolean }[] = [
-  { key: "text", label: "Note", icon: "text.alignleft" },
-  { key: "image", label: "Image", icon: "camera.fill" },
-  { key: "document", label: "Docs", icon: "doc.fill" },
-  { key: "scan", label: "Scan", icon: "scanner.fill", proOnly: true },
-  { key: "link", label: "Link", icon: "link" },
-  { key: "voice", label: "Voice", icon: "mic.fill" },
+const MODES: { key: CaptureMode; label: string; icon: string; color: string; proOnly?: boolean }[] = [
+  { key: "text", label: "Note", icon: "edit-note", color: "#FFD700" },
+  { key: "image", label: "Image", icon: "image", color: "#FFA500" },
+  { key: "document", label: "Docs", icon: "description", color: "#4FC3F7" },
+  { key: "scan", label: "Scan", icon: "document-scanner", color: "#CE93D8", proOnly: true },
+  { key: "link", label: "Link", icon: "link", color: "#81C784" },
+  { key: "voice", label: "Voice", icon: "mic", color: "#FF6B6B" },
 ];
 
 export default function CaptureScreen() {
-  const colors = useColors();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { isGuest, canUseFeature, subscription } = useAppState();
-  const cardBg = isDark ? "rgba(20,35,28,0.55)" : "rgba(255,255,255,0.45)";
-  const cardBorder = isDark ? "rgba(0,201,167,0.15)" : "rgba(0,201,167,0.2)";
   const [mode, setMode] = useState<CaptureMode>("text");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [url, setUrl] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<{
-    name: string;
-    base64: string;
-    mimeType: string;
-  } | null>(null);
+  const [selectedFile, setSelectedFile] = useState<{ name: string; base64: string; mimeType: string } | null>(null);
   const [isRecording, setIsRecording] = useState(false);
 
   const createMutation = trpc.memories.create.useMutation();
   const utils = trpc.useUtils();
-
   const isLoggedIn = isAuthenticated || isGuest;
 
   const resetForm = useCallback(() => {
-    setTitle("");
-    setContent("");
-    setUrl("");
-    setSelectedFile(null);
-    setIsRecording(false);
-    setSaved(false);
+    setTitle(""); setContent(""); setUrl(""); setSelectedFile(null); setIsRecording(false); setSaved(false);
   }, []);
 
   const handlePickImage = useCallback(async () => {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 0.8,
-        base64: true,
-      });
+      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.8, base64: true });
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        setSelectedFile({
-          name: `image-${Date.now()}.jpg`,
-          base64: asset.base64 || "",
-          mimeType: asset.mimeType || "image/jpeg",
-        });
+        setSelectedFile({ name: `image-${Date.now()}.jpg`, base64: asset.base64 || "", mimeType: asset.mimeType || "image/jpeg" });
         if (!title) setTitle(`Image - ${new Date().toLocaleDateString()}`);
       }
-    } catch {
-      Alert.alert("Error", "Failed to pick image");
-    }
+    } catch { Alert.alert("Error", "Failed to pick image"); }
   }, [title]);
 
   const handlePickDocument = useCallback(async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: [
-          "application/pdf",
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-          "application/msword",
-          "application/vnd.ms-powerpoint",
-        ],
+        type: ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/msword", "application/vnd.ms-powerpoint"],
         copyToCacheDirectory: true,
       });
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
         let base64 = "";
         if (Platform.OS !== "web") {
-          base64 = await FileSystem.readAsStringAsync(asset.uri, {
-            encoding: FileSystem.EncodingType.Base64,
-          });
+          base64 = await FileSystem.readAsStringAsync(asset.uri, { encoding: FileSystem.EncodingType.Base64 });
         }
-        setSelectedFile({
-          name: asset.name,
-          base64,
-          mimeType: asset.mimeType || "application/pdf",
-        });
+        setSelectedFile({ name: asset.name, base64, mimeType: asset.mimeType || "application/pdf" });
         if (!title) setTitle(asset.name.replace(/\.(pdf|docx?|pptx?)$/i, ""));
       }
-    } catch {
-      Alert.alert("Error", "Failed to pick document");
-    }
+    } catch { Alert.alert("Error", "Failed to pick document"); }
   }, [title]);
 
   const handleScanDocument = useCallback(async () => {
     if (!canUseFeature("document_analysis")) {
-      Alert.alert("Pro Feature", "Document scanning and AI analysis is a Pro feature.", [
+      Alert.alert("Pro Feature", "Document scanning is a Pro feature.", [
         { text: "Cancel", style: "cancel" },
         { text: "Upgrade", onPress: () => router.push("/subscription" as any) },
       ]);
       return;
     }
-    // Use camera to capture document
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Permission Required", "Camera access is needed to scan documents.");
-        return;
-      }
-      const result = await ImagePicker.launchCameraAsync({
-        quality: 0.9,
-        base64: true,
-      });
+      if (status !== "granted") { Alert.alert("Permission Required", "Camera access is needed."); return; }
+      const result = await ImagePicker.launchCameraAsync({ quality: 0.9, base64: true });
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        setSelectedFile({
-          name: `scan-${Date.now()}.jpg`,
-          base64: asset.base64 || "",
-          mimeType: "image/jpeg",
-        });
+        setSelectedFile({ name: `scan-${Date.now()}.jpg`, base64: asset.base64 || "", mimeType: "image/jpeg" });
         if (!title) setTitle(`Scanned Document - ${new Date().toLocaleDateString()}`);
-        setMode("image"); // Process as image for OCR
+        setMode("image");
       }
-    } catch {
-      Alert.alert("Error", "Failed to scan document. Try picking an image instead.");
-    }
+    } catch { Alert.alert("Error", "Failed to scan document."); }
   }, [title, canUseFeature, router]);
 
   const handleStartRecording = useCallback(async () => {
     try {
       const { requestRecordingPermissionsAsync, setAudioModeAsync } = await import("expo-audio");
       const status = await requestRecordingPermissionsAsync();
-      if (!status.granted) {
-        Alert.alert("Permission Required", "Microphone access is needed to record voice notes.");
-        return;
-      }
+      if (!status.granted) { Alert.alert("Permission Required", "Microphone access is needed."); return; }
       await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
       setIsRecording(true);
       if (!title) setTitle(`Voice Note - ${new Date().toLocaleDateString()}`);
-    } catch {
-      Alert.alert("Error", "Voice recording is not available on this platform. Try adding a text note instead.");
-    }
+    } catch { Alert.alert("Error", "Voice recording is not available on this platform."); }
   }, [title]);
 
   const handleSave = useCallback(async () => {
-    if (!title.trim()) {
-      Alert.alert("Title Required", "Please add a title for your memory.");
-      return;
-    }
-    if (!isAuthenticated && !isGuest) {
-      Alert.alert("Sign In Required", "Please sign in or use guest mode to save memories.");
-      return;
-    }
+    if (!title.trim()) { Alert.alert("Title Required", "Please add a title."); return; }
+    if (!isAuthenticated && !isGuest) { Alert.alert("Sign In Required", "Please sign in or use guest mode."); return; }
     setSaving(true);
     try {
       const effectiveMode = mode === "scan" ? "image" : mode;
       await createMutation.mutateAsync({
-        type: effectiveMode as any,
-        title: title.trim(),
-        content: content.trim() || undefined,
+        type: effectiveMode as any, title: title.trim(), content: content.trim() || undefined,
         sourceUrl: mode === "link" ? url.trim() : undefined,
-        fileBase64: selectedFile?.base64,
-        fileName: selectedFile?.name,
-        fileMimeType: selectedFile?.mimeType,
+        fileBase64: selectedFile?.base64, fileName: selectedFile?.name, fileMimeType: selectedFile?.mimeType,
       });
-      utils.memories.list.invalidate();
-      utils.memories.recent.invalidate();
-      utils.memories.stats.invalidate();
+      utils.memories.list.invalidate(); utils.memories.recent.invalidate(); utils.memories.stats.invalidate();
       setSaved(true);
       setTimeout(() => resetForm(), 2000);
-    } catch {
-      Alert.alert("Error", "Failed to save memory. Please try again.");
-    } finally {
-      setSaving(false);
-    }
+    } catch { Alert.alert("Error", "Failed to save memory."); } finally { setSaving(false); }
   }, [title, content, url, mode, selectedFile, createMutation, utils, resetForm, isAuthenticated, isGuest]);
 
   const handleModeSelect = useCallback((modeKey: CaptureMode) => {
-    if (modeKey === "scan") {
-      handleScanDocument();
-      return;
-    }
-    setMode(modeKey);
-    setSelectedFile(null);
-    setIsRecording(false);
+    if (modeKey === "scan") { handleScanDocument(); return; }
+    setMode(modeKey); setSelectedFile(null); setIsRecording(false);
   }, [handleScanDocument]);
 
   if (!isLoggedIn) {
     return (
-      <GlassScreen screenName="capture" className="flex-1 items-center justify-center p-6">
-        <IconSymbol name="plus.circle.fill" size={48} color={colors.muted} />
-        <Text className="text-lg text-muted mt-4 text-center">Sign in to start capturing memories</Text>
-      </GlassScreen>
+      <CinematicScreen screenName="capture">
+        <View style={styles.centerFull}>
+          <MaterialIcons name="add-circle" size={48} color="rgba(255,255,255,0.2)" />
+          <Text style={styles.loginText}>Sign in to start capturing memories</Text>
+        </View>
+      </CinematicScreen>
     );
   }
 
   if (saved) {
     return (
-      <GlassScreen screenName="capture" className="flex-1 items-center justify-center p-6">
-        <View style={styles.savedContainer}>
-          <IconSymbol name="checkmark.circle.fill" size={64} color={colors.success} />
-          <Text style={[styles.savedTitle, { color: colors.foreground }]}>Saved!</Text>
-          <Text style={[styles.savedSubtitle, { color: colors.muted }]}>
-            AI is processing your memory in the background.
-          </Text>
-          <Pressable
-            onPress={resetForm}
-            style={({ pressed }) => [
-              styles.secondaryBtn,
-              { borderColor: colors.primary },
-              pressed && { opacity: 0.7 },
-            ]}
-          >
-            <Text style={{ color: colors.primary, fontWeight: "600" }}>Capture Another</Text>
-          </Pressable>
+      <CinematicScreen screenName="capture">
+        <View style={styles.centerFull}>
+          <View style={styles.successGlow}>
+            <MaterialIcons name="check-circle" size={64} color="#81C784" />
+          </View>
+          <GoldenText variant="title">Saved!</GoldenText>
+          <Text style={styles.successSub}>AI is processing your memory in the background.</Text>
+          <GoldenButton title="Capture Another" onPress={resetForm} variant="outline" icon="add" size="medium" fullWidth={false} />
         </View>
-      </GlassScreen>
+      </CinematicScreen>
     );
   }
 
+  const currentMode = MODES.find((m) => m.key === mode)!;
+
   return (
-    <GlassScreen screenName="capture">
+    <CinematicScreen screenName="capture">
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-        <View className="px-5 pt-4 pb-2">
-          <Text className="text-2xl font-bold text-foreground">Capture</Text>
-          <Text className="text-sm text-muted mt-1">Save a thought, file, or link to your knowledge base</Text>
+        {/* Header */}
+        <View style={styles.header}>
+          <GoldenText variant="title" style={{ textAlign: "left" }}>Capture</GoldenText>
+          <Text style={styles.headerSub}>Save a thought, file, or link to your knowledge base</Text>
         </View>
 
-        {/* Tutorial Tip */}
-        <TutorialTip
-          tipKey="capture_intro"
-          icon="plus.circle.fill"
-          iconColor="#00D2D3"
-          title="Quick Capture"
-          message="Choose a capture mode below. You can save text notes, images, documents (PDF, DOCX), web links, or scan physical documents."
-        />
+        <TooltipBubble tipId="capture_text" text="Choose a capture mode below — text, image, document, link, scan, or voice. AI processes everything automatically!" position="bottom" arrowSide="left" />
 
         {/* Mode Selector */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
           <View style={styles.modeRow}>
-            {MODES.map((m) => (
-              <Pressable
-                key={m.key}
-                onPress={() => handleModeSelect(m.key)}
-                style={({ pressed }) => [
-                  styles.modeChip,
-                  {
-                    backgroundColor: mode === m.key ? colors.primary : colors.surface,
-                    borderColor: mode === m.key ? colors.primary : colors.border,
-                  },
-                  pressed && { opacity: 0.8 },
-                ]}
-              >
-                <IconSymbol name={m.icon} size={18} color={mode === m.key ? "#fff" : colors.muted} />
-                <Text style={[styles.modeLabel, { color: mode === m.key ? "#fff" : colors.muted }]}>
-                  {m.label}
-                </Text>
-                {m.proOnly && subscription !== "pro" && (
-                  <IconSymbol name="crown.fill" size={12} color="#FDCB6E" />
-                )}
-              </Pressable>
-            ))}
+            {MODES.map((m) => {
+              const active = mode === m.key;
+              return (
+                <Pressable
+                  key={m.key}
+                  onPress={() => handleModeSelect(m.key)}
+                  style={({ pressed }) => [pressed && { opacity: 0.8 }]}
+                >
+                  <LinearGradient
+                    colors={active ? [`${m.color}`, `${m.color}CC`] : ["rgba(255,255,255,0.04)", "rgba(255,255,255,0.02)"]}
+                    style={[styles.modeChip, { borderColor: active ? m.color : "rgba(255,255,255,0.1)" }]}
+                  >
+                    <MaterialIcons name={m.icon as any} size={18} color={active ? "#0A0E1A" : m.color} />
+                    <Text style={[styles.modeLabel, { color: active ? "#0A0E1A" : "rgba(255,255,255,0.6)" }]}>{m.label}</Text>
+                    {m.proOnly && subscription !== "pro" && <MaterialIcons name="workspace-premium" size={12} color="#FFD700" />}
+                  </LinearGradient>
+                </Pressable>
+              );
+            })}
           </View>
         </ScrollView>
 
         {/* Title Input */}
-        <View className="px-5 mt-5">
-          <Text style={[styles.inputLabel, { color: colors.foreground }]}>Title</Text>
+        <View style={styles.inputSection}>
+          <Text style={styles.inputLabel}>Title</Text>
           <TextInput
             value={title}
             onChangeText={setTitle}
             placeholder="Give your memory a title..."
-            placeholderTextColor={colors.muted}
-            style={[styles.textInput, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground }]}
+            placeholderTextColor="rgba(255,255,255,0.25)"
+            style={styles.textInput}
             returnKeyType="done"
           />
         </View>
 
         {/* Mode-specific content */}
-        <View className="px-5 mt-4">
+        <View style={styles.inputSection}>
           {mode === "text" && (
             <>
-              <Text style={[styles.inputLabel, { color: colors.foreground }]}>Note</Text>
+              <Text style={styles.inputLabel}>Note</Text>
               <TextInput
                 value={content}
                 onChangeText={setContent}
                 placeholder="Write your thoughts..."
-                placeholderTextColor={colors.muted}
+                placeholderTextColor="rgba(255,255,255,0.25)"
                 multiline
                 textAlignVertical="top"
-                style={[styles.textArea, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground }]}
+                style={styles.textArea}
               />
             </>
           )}
 
           {mode === "voice" && (
-            <View style={[styles.voiceArea, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <GoldenCard>
               {isRecording ? (
                 <View style={styles.centeredContent}>
-                  <IconSymbol name="waveform" size={48} color={colors.error} />
-                  <Text style={[styles.voiceTitle, { color: colors.foreground }]}>Recording...</Text>
-                  <Text style={[styles.voiceHint, { color: colors.muted }]}>
-                    Voice recording requires the native app. For now, type a note about what you would record.
-                  </Text>
-                  <Pressable
-                    onPress={() => setIsRecording(false)}
-                    style={({ pressed }) => [styles.recordBtn, { backgroundColor: colors.error }, pressed && { opacity: 0.8 }]}
-                  >
+                  <MaterialIcons name="graphic-eq" size={48} color="#FF6B6B" />
+                  <Text style={styles.voiceTitle}>Recording...</Text>
+                  <Text style={styles.voiceHint}>Voice recording requires the native app.</Text>
+                  <Pressable onPress={() => setIsRecording(false)} style={({ pressed }) => [styles.recordBtn, { backgroundColor: "#FF6B6B" }, pressed && { opacity: 0.8 }]}>
                     <Text style={{ color: "#fff", fontWeight: "600" }}>Stop</Text>
                   </Pressable>
                 </View>
               ) : (
                 <View style={styles.centeredContent}>
-                  <IconSymbol name="mic.fill" size={48} color={colors.primary} />
-                  <Text style={[styles.voiceHint, { color: colors.muted }]}>
-                    Tap to start recording a voice memo. Your recording will be transcribed by AI.
-                  </Text>
-                  <Pressable
-                    onPress={handleStartRecording}
-                    style={({ pressed }) => [styles.recordBtn, { backgroundColor: colors.primary }, pressed && { opacity: 0.8 }]}
-                  >
-                    <IconSymbol name="mic.fill" size={20} color="#fff" />
-                    <Text style={{ color: "#fff", fontWeight: "600" }}>Start Recording</Text>
+                  <MaterialIcons name="mic" size={48} color="#FFD700" />
+                  <Text style={styles.voiceHint}>Tap to start recording. AI will transcribe automatically.</Text>
+                  <Pressable onPress={handleStartRecording} style={({ pressed }) => [styles.recordBtn, pressed && { opacity: 0.8 }]}>
+                    <LinearGradient colors={["#FFD700", "#FFA500"]} style={styles.recordBtnGrad}>
+                      <MaterialIcons name="mic" size={20} color="#0A0E1A" />
+                      <Text style={{ color: "#0A0E1A", fontWeight: "700" }}>Start Recording</Text>
+                    </LinearGradient>
                   </Pressable>
                 </View>
               )}
@@ -349,230 +250,101 @@ export default function CaptureScreen() {
                 value={content}
                 onChangeText={setContent}
                 placeholder="Or type a note about what you'd record..."
-                placeholderTextColor={colors.muted}
+                placeholderTextColor="rgba(255,255,255,0.25)"
                 multiline
                 textAlignVertical="top"
-                style={[styles.textArea, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground, marginTop: 16 }]}
+                style={[styles.textArea, { marginTop: 16 }]}
               />
-            </View>
+            </GoldenCard>
           )}
 
           {mode === "image" && (
             <View>
-              <Pressable
-                onPress={handlePickImage}
-                style={({ pressed }) => [styles.filePickerArea, { backgroundColor: colors.surface, borderColor: colors.border }, pressed && { opacity: 0.7 }]}
-              >
+              <Pressable onPress={handlePickImage} style={({ pressed }) => [styles.filePicker, pressed && { opacity: 0.7 }]}>
                 {selectedFile ? (
                   <View style={styles.centeredContent}>
-                    <IconSymbol name="checkmark.circle.fill" size={40} color={colors.success} />
-                    <Text style={[styles.fileSelectedName, { color: colors.foreground }]}>{selectedFile.name}</Text>
-                    <Text style={[styles.fileHint, { color: colors.muted }]}>Tap to change</Text>
+                    <MaterialIcons name="check-circle" size={40} color="#81C784" />
+                    <Text style={styles.fileName}>{selectedFile.name}</Text>
+                    <Text style={styles.fileHint}>Tap to change</Text>
                   </View>
                 ) : (
                   <View style={styles.centeredContent}>
-                    <IconSymbol name="photo.fill" size={40} color={colors.primary} />
-                    <Text style={[styles.fileSelectedName, { color: colors.foreground }]}>Select Image or Screenshot</Text>
-                    <Text style={[styles.fileHint, { color: colors.muted }]}>AI will extract text and key info</Text>
+                    <MaterialIcons name="add-photo-alternate" size={40} color="#FFA500" />
+                    <Text style={styles.fileName}>Select Image or Screenshot</Text>
+                    <Text style={styles.fileHint}>AI will extract text and key info</Text>
                   </View>
                 )}
               </Pressable>
-              <TextInput
-                value={content}
-                onChangeText={setContent}
-                placeholder="Add a note about this image..."
-                placeholderTextColor={colors.muted}
-                multiline
-                textAlignVertical="top"
-                style={[styles.textAreaSmall, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground, marginTop: 12 }]}
-              />
+              <TextInput value={content} onChangeText={setContent} placeholder="Add a note about this image..." placeholderTextColor="rgba(255,255,255,0.25)" multiline textAlignVertical="top" style={[styles.textAreaSmall, { marginTop: 12 }]} />
             </View>
           )}
 
           {mode === "document" && (
             <View>
-              <Pressable
-                onPress={handlePickDocument}
-                style={({ pressed }) => [styles.filePickerArea, { backgroundColor: colors.surface, borderColor: colors.border }, pressed && { opacity: 0.7 }]}
-              >
+              <Pressable onPress={handlePickDocument} style={({ pressed }) => [styles.filePicker, pressed && { opacity: 0.7 }]}>
                 {selectedFile ? (
                   <View style={styles.centeredContent}>
-                    <IconSymbol name="checkmark.circle.fill" size={40} color={colors.success} />
-                    <Text style={[styles.fileSelectedName, { color: colors.foreground }]}>{selectedFile.name}</Text>
-                    <Text style={[styles.fileHint, { color: colors.muted }]}>Tap to change</Text>
+                    <MaterialIcons name="check-circle" size={40} color="#81C784" />
+                    <Text style={styles.fileName}>{selectedFile.name}</Text>
+                    <Text style={styles.fileHint}>Tap to change</Text>
                   </View>
                 ) : (
                   <View style={styles.centeredContent}>
-                    <IconSymbol name="doc.fill" size={40} color={colors.primary} />
-                    <Text style={[styles.fileSelectedName, { color: colors.foreground }]}>Select Document</Text>
-                    <Text style={[styles.fileHint, { color: colors.muted }]}>
-                      PDF, DOCX, or PowerPoint — AI will summarize and extract key info
-                    </Text>
+                    <MaterialIcons name="upload-file" size={40} color="#4FC3F7" />
+                    <Text style={styles.fileName}>Select Document</Text>
+                    <Text style={styles.fileHint}>PDF, DOCX, or PowerPoint — AI will summarize</Text>
                   </View>
                 )}
               </Pressable>
-
-              {/* Document Analysis Hint */}
-              <View style={[styles.hintCard, { backgroundColor: colors.primary + "08", borderColor: colors.primary + "20" }]}>
-                <IconSymbol name="sparkles" size={14} color={colors.primary} />
-                <Text style={[styles.hintText, { color: colors.muted }]}>
-                  Upload contracts, prescriptions, blood reports, or any document. AI will analyze and summarize in simple terms.
-                </Text>
+              <View style={styles.aiHint}>
+                <MaterialIcons name="auto-awesome" size={14} color="#FFD700" />
+                <Text style={styles.aiHintText}>Upload contracts, prescriptions, reports — AI analyzes and summarizes in simple terms.</Text>
               </View>
-
-              <TextInput
-                value={content}
-                onChangeText={setContent}
-                placeholder="Add notes about this document..."
-                placeholderTextColor={colors.muted}
-                multiline
-                textAlignVertical="top"
-                style={[styles.textAreaSmall, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground, marginTop: 12 }]}
-              />
+              <TextInput value={content} onChangeText={setContent} placeholder="Add notes about this document..." placeholderTextColor="rgba(255,255,255,0.25)" multiline textAlignVertical="top" style={[styles.textAreaSmall, { marginTop: 12 }]} />
             </View>
           )}
 
           {mode === "link" && (
             <View>
-              <Text style={[styles.inputLabel, { color: colors.foreground }]}>URL</Text>
-              <TextInput
-                value={url}
-                onChangeText={setUrl}
-                placeholder="https://example.com/article"
-                placeholderTextColor={colors.muted}
-                autoCapitalize="none"
-                keyboardType="url"
-                style={[styles.textInput, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground }]}
-                returnKeyType="done"
-              />
-              <TextInput
-                value={content}
-                onChangeText={setContent}
-                placeholder="Add notes about this link..."
-                placeholderTextColor={colors.muted}
-                multiline
-                textAlignVertical="top"
-                style={[styles.textAreaSmall, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.foreground, marginTop: 12 }]}
-              />
+              <Text style={styles.inputLabel}>URL</Text>
+              <TextInput value={url} onChangeText={setUrl} placeholder="https://example.com/article" placeholderTextColor="rgba(255,255,255,0.25)" autoCapitalize="none" keyboardType="url" style={styles.textInput} returnKeyType="done" />
+              <TextInput value={content} onChangeText={setContent} placeholder="Add notes about this link..." placeholderTextColor="rgba(255,255,255,0.25)" multiline textAlignVertical="top" style={[styles.textAreaSmall, { marginTop: 12 }]} />
             </View>
           )}
         </View>
 
         {/* Save Button */}
-        <View className="px-5 mt-6">
-          <Pressable
-            onPress={handleSave}
-            disabled={saving}
-            style={({ pressed }) => [
-              styles.saveBtn,
-              { backgroundColor: colors.primary },
-              pressed && { opacity: 0.9, transform: [{ scale: 0.97 }] },
-              saving && { opacity: 0.6 },
-            ]}
-          >
-            {saving ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <>
-                <IconSymbol name="sparkles" size={20} color="#fff" />
-                <Text style={styles.saveBtnText}>Save & Process with AI</Text>
-              </>
-            )}
-          </Pressable>
+        <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+          <GoldenButton title={saving ? "Saving..." : "SAVE & PROCESS WITH AI"} onPress={handleSave} disabled={saving} icon="auto-awesome" variant="primary" />
         </View>
       </ScrollView>
-    </GlassScreen>
+    </CinematicScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  centerFull: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, padding: 24 },
+  loginText: { fontSize: 16, color: "rgba(255,255,255,0.4)", textAlign: "center" },
+  successGlow: { marginBottom: 8 },
+  successSub: { fontSize: 15, color: "rgba(255,255,255,0.5)", textAlign: "center" },
+  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
+  headerSub: { fontSize: 14, color: "rgba(255,255,255,0.4)", marginTop: 4 },
   modeRow: { flexDirection: "row", gap: 8, paddingHorizontal: 20 },
-  modeChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 24,
-    borderWidth: 1,
-    gap: 6,
-  },
+  modeChip: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 24, borderWidth: 1, gap: 6 },
   modeLabel: { fontSize: 13, fontWeight: "600" },
-  inputLabel: { fontSize: 14, fontWeight: "600", marginBottom: 8 },
-  textInput: {
-    fontSize: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  textArea: {
-    fontSize: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    minHeight: 160,
-  },
-  textAreaSmall: {
-    fontSize: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    minHeight: 80,
-  },
-  voiceArea: {
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: "center",
-  },
-  centeredContent: { alignItems: "center", gap: 8 },
-  voiceTitle: { fontSize: 16, fontWeight: "600" },
-  voiceHint: { fontSize: 14, textAlign: "center" },
-  recordBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 24,
-    gap: 8,
-  },
-  filePickerArea: {
-    padding: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    alignItems: "center",
-  },
-  fileSelectedName: { fontWeight: "600" },
-  fileHint: { fontSize: 13, textAlign: "center" },
-  hintCard: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    gap: 8,
-    marginTop: 12,
-  },
-  hintText: { fontSize: 12, lineHeight: 18, flex: 1 },
-  saveBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 16,
-    borderRadius: 14,
-    gap: 8,
-  },
-  saveBtnText: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  savedContainer: { alignItems: "center", gap: 12 },
-  savedTitle: { fontSize: 24, fontWeight: "700" },
-  savedSubtitle: { fontSize: 15, textAlign: "center" },
-  secondaryBtn: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 24,
-    borderWidth: 1.5,
-  },
+  inputSection: { paddingHorizontal: 20, marginTop: 16 },
+  inputLabel: { fontSize: 14, fontWeight: "600", color: "rgba(255,255,255,0.6)", marginBottom: 8, letterSpacing: 0.5 },
+  textInput: { fontSize: 16, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,215,0,0.12)", backgroundColor: "rgba(255,255,255,0.04)", color: "#FFFFFF" },
+  textArea: { fontSize: 16, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,215,0,0.12)", backgroundColor: "rgba(255,255,255,0.04)", color: "#FFFFFF", minHeight: 160 },
+  textAreaSmall: { fontSize: 16, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,215,0,0.12)", backgroundColor: "rgba(255,255,255,0.04)", color: "#FFFFFF", minHeight: 80 },
+  centeredContent: { alignItems: "center", gap: 8, paddingVertical: 8 },
+  voiceTitle: { fontSize: 16, fontWeight: "600", color: "#FFFFFF" },
+  voiceHint: { fontSize: 14, textAlign: "center", color: "rgba(255,255,255,0.4)" },
+  recordBtn: { borderRadius: 24, overflow: "hidden", marginTop: 8 },
+  recordBtnGrad: { flexDirection: "row", alignItems: "center", paddingHorizontal: 24, paddingVertical: 12, gap: 8 },
+  filePicker: { padding: 32, borderRadius: 16, borderWidth: 1, borderStyle: "dashed", borderColor: "rgba(255,215,0,0.15)", backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center" },
+  fileName: { fontWeight: "600", color: "#FFFFFF" },
+  fileHint: { fontSize: 13, textAlign: "center", color: "rgba(255,255,255,0.35)" },
+  aiHint: { flexDirection: "row", alignItems: "flex-start", padding: 12, borderRadius: 10, borderWidth: 1, borderColor: "rgba(255,215,0,0.12)", backgroundColor: "rgba(255,215,0,0.04)", gap: 8, marginTop: 12 },
+  aiHintText: { fontSize: 12, lineHeight: 18, flex: 1, color: "rgba(255,255,255,0.5)" },
 });

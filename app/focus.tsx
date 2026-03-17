@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { View, Text, Pressable, StyleSheet, Alert, Platform } from "react-native";
-import { GlassScreen, GlassCard } from "@/components/glass-screen";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
+import { CinematicScreen, GoldenCard } from "@/components/screen-background";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
 import { useAppState } from "@/lib/app-state";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, Easing } from "react-native-reanimated";
@@ -10,7 +10,6 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, Eas
 const DURATIONS = [15, 25, 45, 60, 90];
 
 export default function FocusScreen() {
-  const colors = useColors();
   const router = useRouter();
   const { folderId, folderName } = useLocalSearchParams<{ folderId: string; folderName: string }>();
   const { activeFocusSession, startFocusSession, endFocusSession, canUseFeature } = useAppState();
@@ -114,39 +113,39 @@ export default function FocusScreen() {
   const captured = activeFocusSession?.capturedMemoryIds.length ?? 0;
 
   return (
-    <GlassScreen screenName="focus" edges={["top", "bottom", "left", "right"]}>
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+    <CinematicScreen screenName="focus" edges={["top", "bottom", "left", "right"]}>
+      <View style={[styles.header, { borderBottomColor: "rgba(255,215,0,0.12)" }]}>
         <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
-          <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
+          <MaterialIcons name={"arrow-back" as any} size={22} color={"#FFFFFF"} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Focus Mode</Text>
+        <Text style={[styles.headerTitle, { color: "#FFFFFF" }]}>Focus Mode</Text>
         <View style={{ width: 30 }} />
       </View>
 
       <View style={styles.content}>
         {/* Folder info */}
         {folderName && (
-          <View style={[styles.folderBadge, { backgroundColor: colors.primary + "15" }]}>
-            <IconSymbol name="folder.fill" size={16} color={colors.primary} />
-            <Text style={[styles.folderName, { color: colors.primary }]}>{folderName}</Text>
+          <View style={[styles.folderBadge, { backgroundColor: "#FFD700" + "15" }]}>
+            <MaterialIcons name={"folder" as any} size={16} color={"#FFD700"} />
+            <Text style={[styles.folderName, { color: "#FFD700" }]}>{folderName}</Text>
           </View>
         )}
 
         {/* Timer Circle */}
         <View style={styles.timerContainer}>
-          <Animated.View style={[styles.pulseRing, { borderColor: colors.primary }, pulseStyle]} />
-          <View style={[styles.timerCircle, { backgroundColor: colors.surface, borderColor: colors.primary + "30" }]}>
+          <Animated.View style={[styles.pulseRing, { borderColor: "#FFD700" }, pulseStyle]} />
+          <View style={[styles.timerCircle, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "#FFD700" + "30" }]}>
             {isRunning ? (
               <>
-                <Text style={[styles.timerText, { color: colors.foreground }]}>
+                <Text style={[styles.timerText, { color: "#FFFFFF" }]}>
                   {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
                 </Text>
-                <Text style={[styles.timerLabel, { color: colors.muted }]}>
+                <Text style={[styles.timerLabel, { color: "rgba(255,255,255,0.4)" }]}>
                   {isPaused ? "Paused" : "Focusing..."}
                 </Text>
                 {captured > 0 && (
-                  <View style={[styles.capturedBadge, { backgroundColor: colors.primary + "15" }]}>
-                    <Text style={{ fontSize: 12, color: colors.primary, fontWeight: "600" }}>
+                  <View style={[styles.capturedBadge, { backgroundColor: "#FFD700" + "15" }]}>
+                    <Text style={{ fontSize: 12, color: "#FFD700", fontWeight: "600" }}>
                       {captured} captured
                     </Text>
                   </View>
@@ -154,9 +153,9 @@ export default function FocusScreen() {
               </>
             ) : (
               <>
-                <IconSymbol name="scope" size={48} color={colors.primary} />
-                <Text style={[styles.readyText, { color: colors.foreground }]}>Ready to Focus</Text>
-                <Text style={[styles.readySubtext, { color: colors.muted }]}>
+                <MaterialIcons name={"my-location" as any} size={48} color={"#FFD700"} />
+                <Text style={[styles.readyText, { color: "#FFFFFF" }]}>Ready to Focus</Text>
+                <Text style={[styles.readySubtext, { color: "rgba(255,255,255,0.4)" }]}>
                   Deep work, no distractions
                 </Text>
               </>
@@ -167,7 +166,7 @@ export default function FocusScreen() {
         {/* Duration Selection */}
         {!isRunning && (
           <View style={styles.durationSection}>
-            <Text style={[styles.durationLabel, { color: colors.muted }]}>Session Duration</Text>
+            <Text style={[styles.durationLabel, { color: "rgba(255,255,255,0.4)" }]}>Session Duration</Text>
             <View style={styles.durationRow}>
               {DURATIONS.map((d) => (
                 <Pressable
@@ -176,8 +175,8 @@ export default function FocusScreen() {
                   style={({ pressed }) => [
                     styles.durationChip,
                     {
-                      backgroundColor: selectedDuration === d ? colors.primary : colors.surface,
-                      borderColor: selectedDuration === d ? colors.primary : colors.border,
+                      backgroundColor: selectedDuration === d ? "#FFD700" : "rgba(255,255,255,0.04)",
+                      borderColor: selectedDuration === d ? "#FFD700" : "rgba(255,215,0,0.12)",
                     },
                     pressed && { opacity: 0.8 },
                   ]}
@@ -186,7 +185,7 @@ export default function FocusScreen() {
                     style={{
                       fontSize: 15,
                       fontWeight: "700",
-                      color: selectedDuration === d ? "#fff" : colors.foreground,
+                      color: selectedDuration === d ? "#fff" : "#FFFFFF",
                     }}
                   >
                     {d}
@@ -194,7 +193,7 @@ export default function FocusScreen() {
                   <Text
                     style={{
                       fontSize: 11,
-                      color: selectedDuration === d ? "#ffffffCC" : colors.muted,
+                      color: selectedDuration === d ? "#ffffffCC" : "rgba(255,255,255,0.4)",
                     }}
                   >
                     min
@@ -207,11 +206,11 @@ export default function FocusScreen() {
 
         {/* Progress bar */}
         {isRunning && (
-          <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
+          <View style={[styles.progressBar, { backgroundColor: "rgba(255,215,0,0.12)" }]}>
             <View
               style={[
                 styles.progressFill,
-                { backgroundColor: colors.primary, width: `${progress * 100}%` },
+                { backgroundColor: "#FFD700", width: `${progress * 100}%` },
               ]}
             />
           </View>
@@ -224,11 +223,11 @@ export default function FocusScreen() {
               onPress={handleStart}
               style={({ pressed }) => [
                 styles.startBtn,
-                { backgroundColor: colors.primary },
+                { backgroundColor: "#FFD700" },
                 pressed && { opacity: 0.9, transform: [{ scale: 0.97 }] },
               ]}
             >
-              <IconSymbol name="play.fill" size={22} color="#fff" />
+              <MaterialIcons name={"play-arrow" as any} size={22} color="#fff" />
               <Text style={styles.startBtnText}>Start Focus Session</Text>
             </Pressable>
           ) : (
@@ -237,32 +236,32 @@ export default function FocusScreen() {
                 onPress={handlePause}
                 style={({ pressed }) => [
                   styles.controlBtn,
-                  { backgroundColor: colors.surface, borderColor: colors.border },
+                  { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" },
                   pressed && { opacity: 0.7 },
                 ]}
               >
-                <IconSymbol name={isPaused ? "play.fill" : "pause.fill"} size={24} color={colors.foreground} />
+                <MaterialIcons name={isPaused ? ("play-arrow" as any) : ("pause" as any)} size={24} color={"#FFFFFF"} />
               </Pressable>
               <Pressable
                 onPress={() => router.push("/(tabs)/capture")}
                 style={({ pressed }) => [
                   styles.captureBtn,
-                  { backgroundColor: colors.primary },
+                  { backgroundColor: "#FFD700" },
                   pressed && { opacity: 0.9, transform: [{ scale: 0.97 }] },
                 ]}
               >
-                <IconSymbol name="plus.circle.fill" size={22} color="#fff" />
+                <MaterialIcons name={"add-circle" as any} size={22} color="#fff" />
                 <Text style={styles.captureBtnText}>Quick Capture</Text>
               </Pressable>
               <Pressable
                 onPress={handleStop}
                 style={({ pressed }) => [
                   styles.controlBtn,
-                  { backgroundColor: colors.error + "15", borderColor: colors.error + "30" },
+                  { backgroundColor: "#FF6B6B" + "15", borderColor: "#FF6B6B" + "30" },
                   pressed && { opacity: 0.7 },
                 ]}
               >
-                <IconSymbol name="stop.fill" size={24} color={colors.error} />
+                <MaterialIcons name={"stop" as any} size={24} color={"#FF6B6B"} />
               </Pressable>
             </View>
           )}
@@ -270,18 +269,18 @@ export default function FocusScreen() {
 
         {/* Tips */}
         {!isRunning && (
-          <View style={[styles.tipsCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <IconSymbol name="leaf.fill" size={18} color={colors.primary} />
+          <View style={[styles.tipsCard, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
+            <MaterialIcons name={"eco" as any} size={18} color={"#FFD700"} />
             <View style={{ flex: 1 }}>
-              <Text style={[styles.tipTitle, { color: colors.foreground }]}>Focus Tips</Text>
-              <Text style={[styles.tipText, { color: colors.muted }]}>
+              <Text style={[styles.tipTitle, { color: "#FFFFFF" }]}>Focus Tips</Text>
+              <Text style={[styles.tipText, { color: "rgba(255,255,255,0.4)" }]}>
                 Put your phone on Do Not Disturb. Capture ideas quickly during your session — they'll be saved to your paired folder.
               </Text>
             </View>
           </View>
         )}
       </View>
-    </GlassScreen>
+    </CinematicScreen>
   );
 }
 

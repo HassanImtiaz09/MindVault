@@ -1,422 +1,448 @@
 import { useState, useRef } from "react";
-import { View, Text, Pressable, Dimensions, FlatList, StyleSheet, ImageBackground, Platform } from "react-native";
-import { BlurView } from "expo-blur";
-import { LinearGradient } from "expo-linear-gradient";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { useAppState } from "@/lib/app-state";
+import {
+  View,
+  Text,
+  FlatList,
+  useWindowDimensions,
+  Pressable,
+  StyleSheet,
+  Platform,
+  ViewToken,
+} from "react-native";
 import { useRouter } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-
-const { width, height } = Dimensions.get("window");
-
-const BG = require("@/assets/images/backgrounds/onboarding.jpg");
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { LinearGradient } from "expo-linear-gradient";
+import { CinematicScreen } from "@/components/screen-background";
+import { GoldenButton } from "@/components/golden-button";
+import { GoldenText } from "@/components/golden-text";
+import { useAppState } from "@/lib/app-state";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
 const SLIDES = [
   {
-    icon: "brain" as const,
-    iconColor: "#00C9A7",
-    title: "Welcome to\nMindVault",
-    subtitle: "Your AI-powered second brain",
-    description: "Capture ideas, documents, links, and voice notes. MindVault organizes everything and makes it searchable with AI.",
-    badge: null,
+    key: "welcome",
+    screen: "onboarding",
+    icon: "psychology",
+    title: "MINDVAULT",
+    subtitle: "Your AI-Powered\nSecond Brain",
+    desc: "Capture everything. Remember anything.\nLet AI organize your knowledge.",
   },
   {
-    icon: "sparkles" as const,
-    iconColor: "#D4A017",
-    title: "Capture\nEverything",
-    subtitle: "Multiple ways to save knowledge",
-    description: "Save text notes, screenshots, images, voice recordings, PDFs, DOCX files, presentations, and web links — all in one place.",
-    badge: "6 input types",
+    key: "capture",
+    screen: "capture",
+    icon: "bolt",
+    title: "CAPTURE ANYTHING",
+    subtitle: "Zero Friction Input",
+    desc: "Text, voice, photos, documents, links —\ncapture ideas in seconds from any source.",
   },
   {
-    icon: "doc.text.magnifyingglass" as const,
-    iconColor: "#00C9A7",
-    title: "AI-Powered\nAnalysis",
-    subtitle: "Understand your documents instantly",
-    description: "Upload contracts, prescriptions, blood reports, or any document. AI analyzes and summarizes them in simple, clear language.",
-    badge: "Smart AI",
+    key: "intelligence",
+    screen: "ask",
+    icon: "auto-awesome",
+    title: "AI INTELLIGENCE",
+    subtitle: "Your Knowledge, Amplified",
+    desc: "Ask questions in natural language.\nGet instant answers from your own knowledge base.",
   },
   {
-    icon: "magnifyingglass" as const,
-    iconColor: "#D4A017",
-    title: "Ask Questions\nNaturally",
-    subtitle: "Your knowledge, on demand",
-    description: "Ask questions like \"What did I learn about marketing?\" or \"Summarize my notes on investing\" and get structured AI answers.",
-    badge: "Natural language",
+    key: "insights",
+    screen: "insights",
+    icon: "insights",
+    title: "DEEP INSIGHTS",
+    subtitle: "See the Big Picture",
+    desc: "Knowledge graphs, weekly summaries,\ntrending topics, and idea generation.",
   },
   {
-    icon: "chart.bar.fill" as const,
-    iconColor: "#00C9A7",
-    title: "Insights &\nKnowledge Graph",
-    subtitle: "See how your knowledge connects",
-    description: "Get weekly AI summaries, discover recurring themes, visualize topic connections, and generate new ideas from your knowledge.",
-    badge: "Visual insights",
+    key: "plans",
+    screen: "subscription",
+    icon: "workspace-premium",
+    title: "CHOOSE YOUR PLAN",
+    subtitle: "Unlock Full Potential",
+    desc: "",
   },
-  {
-    icon: "folder.fill" as const,
-    iconColor: "#D4A017",
-    title: "Organize &\nCollaborate",
-    subtitle: "Folders, tags, and team sharing",
-    description: "Create folders for different topics, tag memories with custom labels, share folders with collaborators, and use Focus Mode for deep work.",
-    badge: "Team ready",
-  },
-  {
-    icon: "crown.fill" as const,
-    iconColor: "#D4A017",
-    title: "Unlock\nFull Power",
-    subtitle: "Choose your plan",
-    description: "",
-    badge: "Special offer",
-    isSubscription: true,
-  },
-];
-
-const PRO_FEATURES = [
-  { icon: "infinity" as const, text: "Unlimited memories & folders" },
-  { icon: "mic.fill" as const, text: "Voice, image & document capture" },
-  { icon: "scanner.fill" as const, text: "Contract & medical analysis" },
-  { icon: "scope" as const, text: "Focus Mode & custom tags" },
-  { icon: "square.and.arrow.down" as const, text: "Export & backup" },
-  { icon: "bell.fill" as const, text: "Smart reminders & Daily Digest" },
 ];
 
 export default function OnboardingScreen() {
-  const colors = useColors();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const { width } = useWindowDimensions();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const flatListRef = useRef<FlatList>(null);
   const router = useRouter();
   const { completeOnboarding, setGuest, setSubscription } = useAppState();
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
 
-  const handleNext = () => {
-    if (currentIndex < SLIDES.length - 1) {
-      flatListRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true });
-      setCurrentIndex(currentIndex + 1);
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
+      if (viewableItems.length > 0 && viewableItems[0].index != null) {
+        setActiveIndex(viewableItems[0].index);
+      }
+    }
+  ).current;
+
+  const viewabilityConfig = useRef({
+    viewAreaCoveragePercentThreshold: 50,
+  }).current;
+
+  const goNext = () => {
+    if (activeIndex < SLIDES.length - 1) {
+      flatListRef.current?.scrollToIndex({ index: activeIndex + 1 });
     }
   };
 
-  const handleGetStarted = () => {
+  const finish = (mode: "guest" | "signin" | "pro") => {
     completeOnboarding();
+    if (mode === "guest") {
+      setGuest(true);
+    } else if (mode === "pro") {
+      setSubscription("pro");
+    }
     router.replace("/(tabs)");
   };
 
-  const handleGuestMode = () => {
-    setGuest(true);
-    completeOnboarding();
-    router.replace("/(tabs)");
+  const renderSlide = ({
+    item,
+    index,
+  }: {
+    item: (typeof SLIDES)[0];
+    index: number;
+  }) => {
+    const isPlans = item.key === "plans";
+
+    return (
+      <CinematicScreen
+        screenName={item.screen}
+        edges={["top", "bottom", "left", "right"]}
+        overlayOpacity={0.6}
+      >
+        <View style={[styles.slideInner, { width }]}>
+          {!isPlans ? (
+            <>
+              <Animated.View entering={FadeInDown.delay(200).duration(600)}>
+                <View style={styles.iconCircle}>
+                  <MaterialIcons
+                    name={item.icon as any}
+                    size={48}
+                    color="#FFD700"
+                  />
+                </View>
+              </Animated.View>
+
+              <Animated.View entering={FadeInDown.delay(400).duration(600)}>
+                <GoldenText variant="label" style={{ marginTop: 32 }}>
+                  {item.title}
+                </GoldenText>
+              </Animated.View>
+
+              <Animated.View entering={FadeInDown.delay(600).duration(600)}>
+                <Text style={styles.subtitle}>{item.subtitle}</Text>
+              </Animated.View>
+
+              <Animated.View entering={FadeInUp.delay(800).duration(600)}>
+                <Text style={styles.desc}>{item.desc}</Text>
+              </Animated.View>
+            </>
+          ) : (
+            <>
+              <Animated.View entering={FadeInDown.delay(200).duration(600)}>
+                <View style={styles.iconCircle}>
+                  <MaterialIcons
+                    name="workspace-premium"
+                    size={48}
+                    color="#FFD700"
+                  />
+                </View>
+              </Animated.View>
+
+              <Animated.View entering={FadeInDown.delay(400).duration(600)}>
+                <GoldenText variant="label" style={{ marginTop: 24 }}>
+                  {item.title}
+                </GoldenText>
+                <Text style={[styles.subtitle, { marginTop: 8 }]}>
+                  {item.subtitle}
+                </Text>
+              </Animated.View>
+
+              <Animated.View
+                entering={FadeInUp.delay(600).duration(600)}
+                style={{
+                  width: "100%",
+                  paddingHorizontal: 24,
+                  gap: 12,
+                  marginTop: 24,
+                }}
+              >
+                <View style={styles.planCard}>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={styles.planName}>Basic</Text>
+                    <Text style={styles.planPrice}>Free</Text>
+                  </View>
+                  <Text style={styles.planFeature}>
+                    50 memories / month
+                  </Text>
+                  <Text style={styles.planFeature}>3 folders</Text>
+                  <Text style={styles.planFeature}>
+                    AI search & summaries
+                  </Text>
+                </View>
+
+                <LinearGradient
+                  colors={[
+                    "rgba(255,215,0,0.12)",
+                    "rgba(255,165,0,0.06)",
+                  ]}
+                  style={styles.proCard}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <Text
+                        style={[styles.planName, { color: "#FFD700" }]}
+                      >
+                        Pro
+                      </Text>
+                      <View style={styles.badge}>
+                        <Text style={styles.badgeText}>RECOMMENDED</Text>
+                      </View>
+                    </View>
+                    <Text
+                      style={[styles.planPrice, { color: "#FFD700" }]}
+                    >
+                      $9.99/mo
+                    </Text>
+                  </View>
+                  <Text style={styles.planFeature}>
+                    Unlimited memories
+                  </Text>
+                  <Text style={styles.planFeature}>
+                    Unlimited folders & tags
+                  </Text>
+                  <Text style={styles.planFeature}>
+                    Smart reminders & collaboration
+                  </Text>
+                  <Text style={styles.planFeature}>
+                    Focus Mode & data export
+                  </Text>
+                  <Text style={styles.planFeature}>
+                    Priority AI processing
+                  </Text>
+                </LinearGradient>
+              </Animated.View>
+            </>
+          )}
+        </View>
+      </CinematicScreen>
+    );
   };
-
-  const handleSignIn = () => {
-    completeOnboarding();
-    const { startOAuthLogin } = require("@/lib/_core/auth");
-    startOAuthLogin();
-  };
-
-  const handleSelectPro = () => {
-    setSubscription("pro");
-    completeOnboarding();
-    router.replace("/(tabs)");
-  };
-
-  const isLast = currentIndex === SLIDES.length - 1;
-
-  const overlayColor = isDark ? "rgba(10,18,15,0.7)" : "rgba(240,255,248,0.55)";
 
   return (
     <View style={styles.root}>
-      {/* Background image */}
-      <ImageBackground source={BG} style={StyleSheet.absoluteFill} resizeMode="cover" />
-
-      {/* Blur overlay */}
-      {Platform.OS !== "web" ? (
-        <BlurView intensity={30} tint={isDark ? "dark" : "light"} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: overlayColor, backdropFilter: "blur(12px)" } as any]} />
-      )}
-
-      <LinearGradient
-        colors={isDark
-          ? ["rgba(10,18,15,0.6)", "rgba(5,30,20,0.5)", "rgba(10,18,15,0.7)"]
-          : ["rgba(240,255,248,0.5)", "rgba(230,250,240,0.4)", "rgba(240,255,248,0.6)"]}
-        style={StyleSheet.absoluteFill}
+      <FlatList
+        ref={flatListRef}
+        data={SLIDES}
+        renderItem={renderSlide}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
+        keyExtractor={(item) => item.key}
+        getItemLayout={(_, index) => ({
+          length: width,
+          offset: width * index,
+          index,
+        })}
       />
 
-      <SafeAreaView edges={["top", "bottom", "left", "right"]} style={styles.safeArea}>
-        {/* Skip button */}
-        {!isLast && (
-          <Pressable
-            onPress={handleGetStarted}
-            style={({ pressed }) => [styles.skipBtn, pressed && { opacity: 0.6 }]}
-          >
-            <Text style={[styles.skipText, { color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.4)" }]}>Skip</Text>
-          </Pressable>
-        )}
-
-        {/* Slides */}
-        <FlatList
-          ref={flatListRef}
-          data={SLIDES}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          scrollEnabled={true}
-          onMomentumScrollEnd={(e) => {
-            const idx = Math.round(e.nativeEvent.contentOffset.x / width);
-            setCurrentIndex(idx);
-          }}
-          keyExtractor={(_, i) => i.toString()}
-          renderItem={({ item }) => (
-            <View style={[styles.slide, { width }]}>
-              {(item as any).isSubscription ? (
-                // Subscription upsell slide
-                <View style={styles.subSlide}>
-                  <View style={[styles.iconGlow, { backgroundColor: "#D4A017" + "20" }]}>
-                    <IconSymbol name="crown.fill" size={48} color="#D4A017" />
-                  </View>
-                  <Text style={[styles.slideTitle, { color: colors.foreground }]}>{item.title}</Text>
-                  <Text style={[styles.slideSubtitle, { color: "#D4A017" }]}>{item.subtitle}</Text>
-
-                  {/* Pro features list */}
-                  <View style={[styles.proCard, { backgroundColor: isDark ? "rgba(20,35,28,0.6)" : "rgba(255,255,255,0.5)", borderColor: "#D4A017" + "30" }]}>
-                    {PRO_FEATURES.map((f, i) => (
-                      <View key={i} style={styles.proRow}>
-                        <IconSymbol name={f.icon} size={16} color="#D4A017" />
-                        <Text style={[styles.proText, { color: colors.foreground }]}>{f.text}</Text>
-                      </View>
-                    ))}
-                    <View style={styles.proPriceRow}>
-                      <Text style={[styles.proPrice, { color: "#D4A017" }]}>$9.99</Text>
-                      <Text style={[styles.proPeriod, { color: colors.muted }]}>/month</Text>
-                    </View>
-                  </View>
-                </View>
-              ) : (
-                // Regular feature slide
-                <View style={styles.featureSlide}>
-                  {item.badge && (
-                    <View style={[styles.badge, { backgroundColor: item.iconColor + "20" }]}>
-                      <Text style={[styles.badgeText, { color: item.iconColor }]}>{item.badge}</Text>
-                    </View>
-                  )}
-                  <View style={[styles.iconGlow, { backgroundColor: item.iconColor + "18" }]}>
-                    <IconSymbol name={item.icon} size={52} color={item.iconColor} />
-                  </View>
-                  <Text style={[styles.slideTitle, { color: colors.foreground }]}>{item.title}</Text>
-                  <Text style={[styles.slideSubtitle, { color: item.iconColor }]}>{item.subtitle}</Text>
-                  <Text style={[styles.slideDescription, { color: colors.muted }]}>{item.description}</Text>
-                </View>
-              )}
-            </View>
-          )}
-        />
-
-        {/* Progress dots */}
-        <View style={styles.dotsRow}>
+      <View style={styles.bottomOverlay}>
+        <View style={styles.dots}>
           {SLIDES.map((_, i) => (
             <View
               key={i}
-              style={[
-                styles.dot,
-                {
-                  backgroundColor: i === currentIndex ? "#00C9A7" : (isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.15)"),
-                  width: i === currentIndex ? 28 : 8,
-                },
-              ]}
+              style={[styles.dot, i === activeIndex && styles.dotActive]}
             />
           ))}
         </View>
 
-        {/* Bottom Actions */}
-        <View style={styles.bottomActions}>
-          {isLast ? (
+        <View style={styles.buttons}>
+          {activeIndex < SLIDES.length - 1 ? (
             <>
+              <GoldenButton
+                title="CONTINUE"
+                onPress={goNext}
+                icon="arrow-forward"
+                variant="primary"
+                size="large"
+              />
               <Pressable
-                onPress={handleSelectPro}
+                onPress={() => finish("guest")}
                 style={({ pressed }) => [
-                  styles.proBtn,
-                  pressed && { opacity: 0.9, transform: [{ scale: 0.97 }] },
+                  styles.skipBtn,
+                  pressed && { opacity: 0.7 },
                 ]}
               >
-                <LinearGradient
-                  colors={["#D4A017", "#B8860B"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.proBtnGradient}
-                >
-                  <IconSymbol name="crown.fill" size={18} color="#fff" />
-                  <Text style={styles.proBtnText}>Start Pro — $9.99/mo</Text>
-                </LinearGradient>
-              </Pressable>
-              <Pressable
-                onPress={handleSignIn}
-                style={({ pressed }) => [
-                  styles.mainBtn,
-                  { backgroundColor: "#00C9A7" },
-                  pressed && { opacity: 0.9, transform: [{ scale: 0.97 }] },
-                ]}
-              >
-                <Text style={styles.mainBtnText}>Sign In — Free Plan</Text>
-              </Pressable>
-              <Pressable
-                onPress={handleGuestMode}
-                style={({ pressed }) => [pressed && { opacity: 0.7 }]}
-              >
-                <Text style={[styles.guestText, { color: colors.muted }]}>Continue as Guest</Text>
+                <Text style={styles.skipText}>Skip for now</Text>
               </Pressable>
             </>
           ) : (
-            <Pressable
-              onPress={handleNext}
-              style={({ pressed }) => [
-                styles.mainBtn,
-                { backgroundColor: "#00C9A7" },
-                pressed && { opacity: 0.9, transform: [{ scale: 0.97 }] },
-              ]}
-            >
-              <Text style={styles.mainBtnText}>Next</Text>
-              <IconSymbol name="arrow.right" size={18} color="#fff" />
-            </Pressable>
+            <>
+              <GoldenButton
+                title="START PRO — $9.99/MO"
+                onPress={() => finish("pro")}
+                icon="workspace-premium"
+                variant="primary"
+                size="large"
+              />
+              <GoldenButton
+                title="GET STARTED FREE"
+                onPress={() => finish("guest")}
+                icon="rocket-launch"
+                variant="outline"
+                size="medium"
+              />
+              <Pressable
+                onPress={() => finish("signin")}
+                style={({ pressed }) => [
+                  styles.skipBtn,
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
+                <Text style={styles.skipText}>Sign in with account</Text>
+              </Pressable>
+            </>
           )}
         </View>
-      </SafeAreaView>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1 },
-  safeArea: { flex: 1 },
-  skipBtn: {
-    position: "absolute",
-    top: 8,
-    right: 20,
-    zIndex: 10,
-    padding: 8,
-  },
-  skipText: { fontSize: 15, fontWeight: "600" },
-  slide: {
+  root: {
     flex: 1,
-    alignItems: "center",
+    backgroundColor: "#0A0E1A",
+  },
+  slideInner: {
+    flex: 1,
     justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 32,
+    paddingBottom: 180,
   },
-  featureSlide: {
-    alignItems: "center",
-    gap: 8,
-  },
-  subSlide: {
-    alignItems: "center",
-    gap: 8,
-    width: "100%",
-  },
-  badge: {
-    paddingHorizontal: 14,
-    paddingVertical: 5,
-    borderRadius: 20,
-    marginBottom: 8,
-  },
-  badgeText: { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1 },
-  iconGlow: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    alignItems: "center",
+  iconCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: "rgba(255,215,0,0.08)",
+    borderWidth: 1.5,
+    borderColor: "rgba(255,215,0,0.2)",
     justifyContent: "center",
-    marginBottom: 16,
+    alignItems: "center",
   },
-  slideTitle: {
-    fontSize: 32,
+  subtitle: {
+    fontSize: 28,
     fontWeight: "800",
+    color: "#FFFFFF",
     textAlign: "center",
-    lineHeight: 38,
+    lineHeight: 36,
+    marginTop: 12,
   },
-  slideSubtitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    textAlign: "center",
-    marginTop: 4,
-  },
-  slideDescription: {
+  desc: {
     fontSize: 15,
-    lineHeight: 22,
+    color: "rgba(255,255,255,0.6)",
     textAlign: "center",
-    marginTop: 8,
-    paddingHorizontal: 8,
-  },
-  proCard: {
-    width: "100%",
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 16,
+    lineHeight: 22,
     marginTop: 16,
-    gap: 10,
   },
-  proRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
+  bottomOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    paddingBottom: Platform.OS === "ios" ? 50 : 32,
   },
-  proText: { fontSize: 14, fontWeight: "500" },
-  proPriceRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    justifyContent: "center",
-    marginTop: 8,
-    gap: 2,
-  },
-  proPrice: { fontSize: 32, fontWeight: "800" },
-  proPeriod: { fontSize: 14 },
-  dotsRow: {
+  dots: {
     flexDirection: "row",
     justifyContent: "center",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 20,
+    gap: 8,
+    marginBottom: 24,
   },
   dot: {
+    width: 8,
     height: 8,
     borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.2)",
   },
-  bottomActions: {
-    paddingHorizontal: 24,
-    paddingBottom: 8,
-    gap: 10,
+  dotActive: {
+    backgroundColor: "#FFD700",
+    width: 24,
   },
-  mainBtn: {
-    flexDirection: "row",
+  buttons: {
+    gap: 12,
+  },
+  skipBtn: {
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 16,
-    borderRadius: 14,
-    gap: 8,
+    paddingVertical: 12,
   },
-  mainBtnText: {
-    color: "#fff",
-    fontSize: 17,
-    fontWeight: "700",
-  },
-  proBtn: {
-    borderRadius: 14,
-    overflow: "hidden",
-  },
-  proBtnGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 16,
-    gap: 8,
-  },
-  proBtnText: {
-    color: "#fff",
-    fontSize: 17,
-    fontWeight: "700",
-  },
-  guestText: {
+  skipText: {
+    color: "rgba(255,255,255,0.4)",
     fontSize: 14,
-    textAlign: "center",
-    paddingVertical: 4,
+    fontWeight: "500",
+  },
+  planCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "rgba(15,20,40,0.8)",
+    padding: 16,
+    gap: 4,
+  },
+  proCard: {
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: "rgba(255,215,0,0.3)",
+    padding: 16,
+    gap: 4,
+  },
+  planName: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+  planPrice: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "rgba(255,255,255,0.7)",
+  },
+  planFeature: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.5)",
+    lineHeight: 20,
+  },
+  badge: {
+    backgroundColor: "rgba(255,215,0,0.2)",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  badgeText: {
+    fontSize: 9,
+    fontWeight: "800",
+    color: "#FFD700",
+    letterSpacing: 0.5,
   },
 });

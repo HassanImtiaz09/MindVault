@@ -3,8 +3,8 @@ import { View, Text, Pressable, FlatList, TextInput, StyleSheet, Alert, Platform
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useAppState } from "@/lib/app-state";
 import { useRouter } from "expo-router";
@@ -12,7 +12,6 @@ import { useRouter } from "expo-router";
 const BG = require("@/assets/images/backgrounds/detail.jpg");
 
 export default function RemindersScreen() {
-  const colors = useColors();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const router = useRouter();
@@ -62,11 +61,11 @@ export default function RemindersScreen() {
         {/* Header */}
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
-            <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
+            <MaterialIcons name={"arrow-back" as any} size={22} color={"#FFFFFF"} />
           </Pressable>
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Smart Reminders</Text>
+          <Text style={[styles.headerTitle, { color: "#FFFFFF" }]}>Smart Reminders</Text>
           <Pressable onPress={() => setShowAdd(true)} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
-            <IconSymbol name="plus.circle.fill" size={26} color="#00C9A7" />
+            <MaterialIcons name={"add-circle" as any} size={26} color="#00C9A7" />
           </Pressable>
         </View>
 
@@ -75,23 +74,23 @@ export default function RemindersScreen() {
           <View style={[styles.addCard, { backgroundColor: cardBg, borderColor: "#D4A017" + "40" }]}>
             <Text style={[styles.addTitle, { color: "#D4A017" }]}>New Reminder</Text>
             <TextInput
-              style={[styles.input, { color: colors.foreground, borderColor: cardBorder, backgroundColor: isDark ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.5)" }]}
+              style={[styles.input, { color: "#FFFFFF", borderColor: cardBorder, backgroundColor: isDark ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.5)" }]}
               placeholder="Reminder title..."
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={"rgba(255,255,255,0.4)"}
               value={title}
               onChangeText={setTitle}
             />
             <TextInput
-              style={[styles.input, { color: colors.foreground, borderColor: cardBorder, backgroundColor: isDark ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.5)" }]}
+              style={[styles.input, { color: "#FFFFFF", borderColor: cardBorder, backgroundColor: isDark ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.5)" }]}
               placeholder="Description (optional)..."
-              placeholderTextColor={colors.muted}
+              placeholderTextColor={"rgba(255,255,255,0.4)"}
               value={desc}
               onChangeText={setDesc}
               multiline
             />
             <View style={styles.addActions}>
               <Pressable onPress={() => setShowAdd(false)} style={({ pressed }) => [styles.cancelBtn, pressed && { opacity: 0.7 }]}>
-                <Text style={{ color: colors.muted, fontWeight: "600" }}>Cancel</Text>
+                <Text style={{ color: "rgba(255,255,255,0.4)", fontWeight: "600" }}>Cancel</Text>
               </Pressable>
               <Pressable
                 onPress={handleAdd}
@@ -117,9 +116,9 @@ export default function RemindersScreen() {
           }
           ListEmptyComponent={
             <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-              <IconSymbol name="bell.fill" size={40} color="#D4A017" />
-              <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No Reminders Yet</Text>
-              <Text style={[styles.emptySubtitle, { color: colors.muted }]}>
+              <MaterialIcons name={"notifications" as any} size={40} color="#D4A017" />
+              <Text style={[styles.emptyTitle, { color: "#FFFFFF" }]}>No Reminders Yet</Text>
+              <Text style={[styles.emptySubtitle, { color: "rgba(255,255,255,0.4)" }]}>
                 AI will detect action items in your notes and suggest reminders automatically. You can also add them manually.
               </Text>
             </View>
@@ -130,7 +129,7 @@ export default function RemindersScreen() {
             return (
               <>
                 {showCompletedHeader && (
-                  <Text style={[styles.sectionLabel, { color: colors.muted, marginTop: 16 }]}>Completed</Text>
+                  <Text style={[styles.sectionLabel, { color: "rgba(255,255,255,0.4)", marginTop: 16 }]}>Completed</Text>
                 )}
                 <View style={[styles.reminderCard, { backgroundColor: cardBg, borderColor: isCompleted ? cardBorder : "#D4A017" + "30" }]}>
                   <Pressable
@@ -144,14 +143,14 @@ export default function RemindersScreen() {
                       pressed && { opacity: 0.7 },
                     ]}
                   >
-                    {isCompleted && <IconSymbol name="checkmark" size={14} color="#00C9A7" />}
+                    {isCompleted && <MaterialIcons name={"check" as any} size={14} color="#00C9A7" />}
                   </Pressable>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.reminderTitle, { color: colors.foreground, textDecorationLine: isCompleted ? "line-through" : "none" }]}>
+                    <Text style={[styles.reminderTitle, { color: "#FFFFFF", textDecorationLine: isCompleted ? "line-through" : "none" }]}>
                       {item.title}
                     </Text>
                     {item.description ? (
-                      <Text style={[styles.reminderDesc, { color: colors.muted }]} numberOfLines={2}>
+                      <Text style={[styles.reminderDesc, { color: "rgba(255,255,255,0.4)" }]} numberOfLines={2}>
                         {item.description}
                       </Text>
                     ) : null}
@@ -163,7 +162,7 @@ export default function RemindersScreen() {
                     onPress={() => deleteReminder(item.id)}
                     style={({ pressed }) => [pressed && { opacity: 0.5 }]}
                   >
-                    <IconSymbol name="trash.fill" size={16} color={colors.muted} />
+                    <MaterialIcons name={"delete" as any} size={16} color={"rgba(255,255,255,0.4)"} />
                   </Pressable>
                 </View>
               </>

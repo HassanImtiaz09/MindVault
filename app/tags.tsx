@@ -1,8 +1,8 @@
 import { useState, useCallback } from "react";
 import { View, Text, Pressable, TextInput, FlatList, Alert, StyleSheet } from "react-native";
-import { GlassScreen, GlassCard } from "@/components/glass-screen";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
+import { CinematicScreen, GoldenCard } from "@/components/screen-background";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
 import { useAppState, type UserTag } from "@/lib/app-state";
 import { useRouter } from "expo-router";
 
@@ -12,7 +12,6 @@ const TAG_COLORS = [
 ];
 
 export default function TagsScreen() {
-  const colors = useColors();
   const router = useRouter();
   const { tags, createTag, deleteTag, getMemoriesByTag, canUseFeature } = useAppState();
   const [newTagName, setNewTagName] = useState("");
@@ -40,11 +39,11 @@ export default function TagsScreen() {
   const renderTag = useCallback(({ item }: { item: UserTag }) => {
     const memCount = getMemoriesByTag(item.id).length;
     return (
-      <View style={[styles.tagCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <View style={[styles.tagCard, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
         <View style={[styles.tagDot, { backgroundColor: item.color }]} />
         <View style={{ flex: 1 }}>
-          <Text style={[styles.tagName, { color: colors.foreground }]}>{item.name}</Text>
-          <Text style={[styles.tagCount, { color: colors.muted }]}>
+          <Text style={[styles.tagName, { color: "#FFFFFF" }]}>{item.name}</Text>
+          <Text style={[styles.tagCount, { color: "rgba(255,255,255,0.4)" }]}>
             {memCount} {memCount === 1 ? "memory" : "memories"}
           </Text>
         </View>
@@ -52,37 +51,37 @@ export default function TagsScreen() {
           onPress={() => handleDelete(item)}
           style={({ pressed }) => [styles.deleteBtn, pressed && { opacity: 0.5 }]}
         >
-          <IconSymbol name="trash.fill" size={16} color={colors.error} />
+          <MaterialIcons name={"delete" as any} size={16} color={"#FF6B6B"} />
         </Pressable>
       </View>
     );
-  }, [colors, getMemoriesByTag, handleDelete]);
+  }, [getMemoriesByTag, handleDelete]);
 
   return (
-    <GlassScreen screenName="detail" edges={["top", "bottom", "left", "right"]}>
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+    <CinematicScreen screenName="detail" edges={["top", "bottom", "left", "right"]}>
+      <View style={[styles.header, { borderBottomColor: "rgba(255,215,0,0.12)" }]}>
         <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
-          <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
+          <MaterialIcons name={"arrow-back" as any} size={22} color={"#FFFFFF"} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Tags</Text>
+        <Text style={[styles.headerTitle, { color: "#FFFFFF" }]}>Tags</Text>
         <Pressable
           onPress={() => setShowCreate(!showCreate)}
           style={({ pressed }) => [pressed && { opacity: 0.6 }]}
         >
-          <IconSymbol name="plus" size={24} color={colors.primary} />
+          <MaterialIcons name={"add" as any} size={24} color={"#FFD700"} />
         </Pressable>
       </View>
 
       {/* Create Tag Form */}
       {showCreate && (
-        <View style={[styles.createForm, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.createTitle, { color: colors.foreground }]}>Create New Tag</Text>
+        <View style={[styles.createForm, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
+          <Text style={[styles.createTitle, { color: "#FFFFFF" }]}>Create New Tag</Text>
           <TextInput
             value={newTagName}
             onChangeText={setNewTagName}
             placeholder="Tag name..."
-            placeholderTextColor={colors.muted}
-            style={[styles.input, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]}
+            placeholderTextColor={"rgba(255,255,255,0.4)"}
+            style={[styles.input, { color: "#FFFFFF", backgroundColor: "#0A0E1A", borderColor: "rgba(255,215,0,0.12)" }]}
             returnKeyType="done"
             onSubmitEditing={handleCreate}
           />
@@ -103,15 +102,15 @@ export default function TagsScreen() {
           <View style={styles.createActions}>
             <Pressable
               onPress={() => setShowCreate(false)}
-              style={({ pressed }) => [styles.cancelBtn, { borderColor: colors.border }, pressed && { opacity: 0.7 }]}
+              style={({ pressed }) => [styles.cancelBtn, { borderColor: "rgba(255,215,0,0.12)" }, pressed && { opacity: 0.7 }]}
             >
-              <Text style={{ color: colors.muted, fontWeight: "600" }}>Cancel</Text>
+              <Text style={{ color: "rgba(255,255,255,0.4)", fontWeight: "600" }}>Cancel</Text>
             </Pressable>
             <Pressable
               onPress={handleCreate}
               style={({ pressed }) => [
                 styles.createBtn,
-                { backgroundColor: colors.primary },
+                { backgroundColor: "#FFD700" },
                 pressed && { opacity: 0.9 },
               ]}
             >
@@ -129,26 +128,26 @@ export default function TagsScreen() {
         contentContainerStyle={{ padding: 20, gap: 10 }}
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <IconSymbol name="tag.fill" size={48} color={colors.muted} />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No tags yet</Text>
-            <Text style={[styles.emptySubtitle, { color: colors.muted }]}>
+            <MaterialIcons name={"label" as any} size={48} color={"rgba(255,255,255,0.4)"} />
+            <Text style={[styles.emptyTitle, { color: "#FFFFFF" }]}>No tags yet</Text>
+            <Text style={[styles.emptySubtitle, { color: "rgba(255,255,255,0.4)" }]}>
               Create custom tags to organize your memories beyond AI-generated topics.
             </Text>
             <Pressable
               onPress={() => setShowCreate(true)}
               style={({ pressed }) => [
                 styles.emptyBtn,
-                { backgroundColor: colors.primary },
+                { backgroundColor: "#FFD700" },
                 pressed && { opacity: 0.9 },
               ]}
             >
-              <IconSymbol name="plus" size={18} color="#fff" />
+              <MaterialIcons name={"add" as any} size={18} color="#fff" />
               <Text style={{ color: "#fff", fontWeight: "600" }}>Create First Tag</Text>
             </Pressable>
           </View>
         }
       />
-    </GlassScreen>
+    </CinematicScreen>
   );
 }
 

@@ -1,8 +1,8 @@
 import { useState, useCallback } from "react";
 import { ScrollView, Text, View, Pressable, TextInput, Alert, StyleSheet, ActivityIndicator } from "react-native";
-import { GlassScreen, GlassCard } from "@/components/glass-screen";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
+import { CinematicScreen, GoldenCard } from "@/components/screen-background";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
 import { useAppState } from "@/lib/app-state";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -33,7 +33,6 @@ export async function saveFolders(folders: Folder[]) {
 }
 
 export default function FoldersScreen() {
-  const colors = useColors();
   const router = useRouter();
   const { canUseFeature, getFolderLimit, subscription } = useAppState();
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -89,31 +88,31 @@ export default function FoldersScreen() {
   }, [folders]);
 
   return (
-    <GlassScreen screenName="folders" edges={["top", "bottom", "left", "right"]}>
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+    <CinematicScreen screenName="folders" edges={["top", "bottom", "left", "right"]}>
+      <View style={[styles.header, { borderBottomColor: "rgba(255,215,0,0.12)" }]}>
         <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
-          <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
+          <MaterialIcons name={"arrow-back" as any} size={22} color={"#FFFFFF"} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Folders</Text>
+        <Text style={[styles.headerTitle, { color: "#FFFFFF" }]}>Folders</Text>
         <Pressable
           onPress={() => setShowCreate(!showCreate)}
           style={({ pressed }) => [pressed && { opacity: 0.6 }]}
         >
-          <IconSymbol name="folder.badge.plus" size={24} color={colors.primary} />
+          <MaterialIcons name={"create-new-folder" as any} size={24} color={"#FFD700"} />
         </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Create Form */}
         {showCreate && (
-          <View style={[styles.createForm, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.createLabel, { color: colors.foreground }]}>New Folder</Text>
+          <View style={[styles.createForm, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
+            <Text style={[styles.createLabel, { color: "#FFFFFF" }]}>New Folder</Text>
             <TextInput
               value={newName}
               onChangeText={setNewName}
               placeholder="Folder name..."
-              placeholderTextColor={colors.muted}
-              style={[styles.nameInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+              placeholderTextColor={"rgba(255,255,255,0.4)"}
+              style={[styles.nameInput, { color: "#FFFFFF", borderColor: "rgba(255,215,0,0.12)", backgroundColor: "#0A0E1A" }]}
               returnKeyType="done"
               onSubmitEditing={handleCreate}
             />
@@ -124,19 +123,19 @@ export default function FoldersScreen() {
                   onPress={() => setSelectedColor(c)}
                   style={({ pressed }) => [
                     styles.colorDot,
-                    { backgroundColor: c, borderColor: selectedColor === c ? colors.foreground : "transparent", borderWidth: selectedColor === c ? 2.5 : 0 },
+                    { backgroundColor: c, borderColor: selectedColor === c ? "#FFFFFF" : "transparent", borderWidth: selectedColor === c ? 2.5 : 0 },
                     pressed && { opacity: 0.7 },
                   ]}
                 />
               ))}
             </View>
             <View style={styles.createActions}>
-              <Pressable onPress={() => setShowCreate(false)} style={({ pressed }) => [styles.cancelBtn, { borderColor: colors.border }, pressed && { opacity: 0.7 }]}>
-                <Text style={{ color: colors.muted, fontWeight: "600" }}>Cancel</Text>
+              <Pressable onPress={() => setShowCreate(false)} style={({ pressed }) => [styles.cancelBtn, { borderColor: "rgba(255,215,0,0.12)" }, pressed && { opacity: 0.7 }]}>
+                <Text style={{ color: "rgba(255,255,255,0.4)", fontWeight: "600" }}>Cancel</Text>
               </Pressable>
               <Pressable
                 onPress={handleCreate}
-                style={({ pressed }) => [styles.createBtn, { backgroundColor: colors.primary }, pressed && { opacity: 0.8 }]}
+                style={({ pressed }) => [styles.createBtn, { backgroundColor: "#FFD700" }, pressed && { opacity: 0.8 }]}
               >
                 <Text style={{ color: "#fff", fontWeight: "600" }}>Create</Text>
               </Pressable>
@@ -145,19 +144,19 @@ export default function FoldersScreen() {
         )}
 
         {loading ? (
-          <ActivityIndicator style={{ marginTop: 40 }} color={colors.primary} />
+          <ActivityIndicator style={{ marginTop: 40 }} color={"#FFD700"} />
         ) : folders.length === 0 ? (
           <View style={styles.emptyState}>
-            <IconSymbol name="folder.fill" size={48} color={colors.muted} />
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No Folders Yet</Text>
-            <Text style={[styles.emptySubtitle, { color: colors.muted }]}>
+            <MaterialIcons name={"folder" as any} size={48} color={"rgba(255,255,255,0.4)"} />
+            <Text style={[styles.emptyTitle, { color: "#FFFFFF" }]}>No Folders Yet</Text>
+            <Text style={[styles.emptySubtitle, { color: "rgba(255,255,255,0.4)" }]}>
               Create folders to organize your memories by topic, project, or category.
             </Text>
             <Pressable
               onPress={() => setShowCreate(true)}
-              style={({ pressed }) => [styles.emptyBtn, { backgroundColor: colors.primary }, pressed && { opacity: 0.8 }]}
+              style={({ pressed }) => [styles.emptyBtn, { backgroundColor: "#FFD700" }, pressed && { opacity: 0.8 }]}
             >
-              <IconSymbol name="folder.badge.plus" size={18} color="#fff" />
+              <MaterialIcons name={"create-new-folder" as any} size={18} color="#fff" />
               <Text style={{ color: "#fff", fontWeight: "600" }}>Create First Folder</Text>
             </Pressable>
           </View>
@@ -170,26 +169,26 @@ export default function FoldersScreen() {
                 onLongPress={() => handleDelete(folder.id)}
                 style={({ pressed }) => [
                   styles.folderCard,
-                  { backgroundColor: colors.surface, borderColor: colors.border },
+                  { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" },
                   pressed && { opacity: 0.7 },
                 ]}
               >
                 <View style={[styles.folderIcon, { backgroundColor: folder.color + "20" }]}>
-                  <IconSymbol name="folder.fill" size={22} color={folder.color} />
+                  <MaterialIcons name={"folder" as any} size={22} color={folder.color} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.folderName, { color: colors.foreground }]}>{folder.name}</Text>
-                  <Text style={[styles.folderCount, { color: colors.muted }]}>
+                  <Text style={[styles.folderName, { color: "#FFFFFF" }]}>{folder.name}</Text>
+                  <Text style={[styles.folderCount, { color: "rgba(255,255,255,0.4)" }]}>
                     {folder.memoryIds.length} {folder.memoryIds.length === 1 ? "memory" : "memories"}
                   </Text>
                 </View>
-                <IconSymbol name="chevron.right" size={16} color={colors.muted} />
+                <MaterialIcons name={"chevron-right" as any} size={16} color={"rgba(255,255,255,0.4)"} />
               </Pressable>
             ))}
           </View>
         )}
       </ScrollView>
-    </GlassScreen>
+    </CinematicScreen>
   );
 }
 

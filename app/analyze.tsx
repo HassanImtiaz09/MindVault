@@ -1,21 +1,20 @@
 import { useState, useCallback } from "react";
 import { ScrollView, Text, View, Pressable, ActivityIndicator, Alert, Share, StyleSheet } from "react-native";
-import { GlassScreen, GlassCard } from "@/components/glass-screen";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
+import { CinematicScreen, GoldenCard } from "@/components/screen-background";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
 import { trpc } from "@/lib/trpc";
 import { useLocalSearchParams, useRouter } from "expo-router";
 
 const ANALYSIS_TYPES = [
-  { key: "summary", label: "General Summary", icon: "doc.text.fill" as const, color: "#6C5CE7", description: "Comprehensive summary in simple terms" },
-  { key: "contract", label: "Contract Review", icon: "doc.fill" as const, color: "#FF6B6B", description: "Key terms, obligations, and risks" },
-  { key: "medical", label: "Medical Report", icon: "heart.fill" as const, color: "#00D2D3", description: "Lab results, prescriptions explained" },
-  { key: "financial", label: "Financial Analysis", icon: "chart.bar.fill" as const, color: "#00B894", description: "Key figures and what they mean" },
-  { key: "research", label: "Research Analysis", icon: "book.fill" as const, color: "#FDCB6E", description: "Findings, methodology, conclusions" },
+  { key: "summary", label: "General Summary", icon: "article" as any, color: "#6C5CE7", description: "Comprehensive summary in simple terms" },
+  { key: "contract", label: "Contract Review", icon: "description" as any, color: "#FF6B6B", description: "Key terms, obligations, and risks" },
+  { key: "medical", label: "Medical Report", icon: "favorite" as any, color: "#00D2D3", description: "Lab results, prescriptions explained" },
+  { key: "financial", label: "Financial Analysis", icon: "bar-chart" as any, color: "#00B894", description: "Key figures and what they mean" },
+  { key: "research", label: "Research Analysis", icon: "menu-book" as any, color: "#FDCB6E", description: "Findings, methodology, conclusions" },
 ];
 
 export default function AnalyzeScreen() {
-  const colors = useColors();
   const router = useRouter();
   const { memoryId } = useLocalSearchParams<{ memoryId: string }>();
   const id = parseInt(memoryId || "0", 10);
@@ -49,20 +48,20 @@ export default function AnalyzeScreen() {
   }, [analysis]);
 
   return (
-    <GlassScreen screenName="detail" edges={["top", "bottom", "left", "right"]}>
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+    <CinematicScreen screenName="detail" edges={["top", "bottom", "left", "right"]}>
+      <View style={[styles.header, { borderBottomColor: "rgba(255,215,0,0.12)" }]}>
         <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
-          <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
+          <MaterialIcons name={"arrow-back" as any} size={22} color={"#FFFFFF"} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Document Analysis</Text>
+        <Text style={[styles.headerTitle, { color: "#FFFFFF" }]}>Document Analysis</Text>
         <View style={{ width: 30 }} />
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Analysis Type Selection */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Choose Analysis Type</Text>
-          <Text style={[styles.sectionSubtitle, { color: colors.muted }]}>
+          <Text style={[styles.sectionTitle, { color: "#FFFFFF" }]}>Choose Analysis Type</Text>
+          <Text style={[styles.sectionSubtitle, { color: "rgba(255,255,255,0.4)" }]}>
             Select how you want AI to analyze this document
           </Text>
           <View style={styles.typeGrid}>
@@ -74,18 +73,18 @@ export default function AnalyzeScreen() {
                 style={({ pressed }) => [
                   styles.typeCard,
                   {
-                    backgroundColor: selectedType === type.key ? type.color + "15" : colors.surface,
-                    borderColor: selectedType === type.key ? type.color + "40" : colors.border,
+                    backgroundColor: selectedType === type.key ? type.color + "15" : "rgba(255,255,255,0.04)",
+                    borderColor: selectedType === type.key ? type.color + "40" : "rgba(255,215,0,0.12)",
                   },
                   pressed && { opacity: 0.7 },
                   loading && { opacity: 0.5 },
                 ]}
               >
                 <View style={[styles.typeIconBox, { backgroundColor: type.color + "20" }]}>
-                  <IconSymbol name={type.icon} size={22} color={type.color} />
+                  <MaterialIcons name={type.icon} size={22} color={type.color} />
                 </View>
-                <Text style={[styles.typeLabel, { color: colors.foreground }]}>{type.label}</Text>
-                <Text style={[styles.typeDesc, { color: colors.muted }]}>{type.description}</Text>
+                <Text style={[styles.typeLabel, { color: "#FFFFFF" }]}>{type.label}</Text>
+                <Text style={[styles.typeDesc, { color: "rgba(255,255,255,0.4)" }]}>{type.description}</Text>
               </Pressable>
             ))}
           </View>
@@ -94,9 +93,9 @@ export default function AnalyzeScreen() {
         {/* Loading */}
         {loading && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={[styles.loadingText, { color: colors.muted }]}>Analyzing document...</Text>
-            <Text style={[styles.loadingHint, { color: colors.muted }]}>
+            <ActivityIndicator size="large" color={"#FFD700"} />
+            <Text style={[styles.loadingText, { color: "rgba(255,255,255,0.4)" }]}>Analyzing document...</Text>
+            <Text style={[styles.loadingHint, { color: "rgba(255,255,255,0.4)" }]}>
               AI is reading and interpreting your document. This may take a moment.
             </Text>
           </View>
@@ -107,20 +106,20 @@ export default function AnalyzeScreen() {
           <View style={styles.section}>
             <View style={styles.resultHeader}>
               <View style={styles.resultTitleRow}>
-                <IconSymbol name="sparkles" size={18} color={colors.primary} />
-                <Text style={[styles.resultTitle, { color: colors.primary }]}>Analysis Result</Text>
+                <MaterialIcons name={"auto-awesome" as any} size={18} color={"#FFD700"} />
+                <Text style={[styles.resultTitle, { color: "#FFD700" }]}>Analysis Result</Text>
               </View>
               <Pressable onPress={handleShare} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
-                <IconSymbol name="square.and.arrow.up" size={18} color={colors.primary} />
+                <MaterialIcons name={"share" as any} size={18} color={"#FFD700"} />
               </Pressable>
             </View>
-            <View style={[styles.resultCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <Text style={[styles.resultText, { color: colors.foreground }]}>{analysis}</Text>
+            <View style={[styles.resultCard, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
+              <Text style={[styles.resultText, { color: "#FFFFFF" }]}>{analysis}</Text>
             </View>
           </View>
         )}
       </ScrollView>
-    </GlassScreen>
+    </CinematicScreen>
   );
 }
 

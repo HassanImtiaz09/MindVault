@@ -1,51 +1,46 @@
-import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl, StyleSheet } from "react-native";
-import { GlassScreen, GlassCard } from "@/components/glass-screen";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
-import { useColorScheme } from "@/hooks/use-color-scheme";
+import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl, StyleSheet, Platform } from "react-native";
+import { CinematicScreen, GoldenCard } from "@/components/screen-background";
+import { GoldenText } from "@/components/golden-text";
+import { GoldenButton } from "@/components/golden-button";
+import { TooltipBubble } from "@/components/tooltip-bubble";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { useRouter } from "expo-router";
 import { useState, useCallback, useEffect } from "react";
 import { useAppState } from "@/lib/app-state";
-import { TutorialTip } from "@/components/tutorial-tip";
-import { DailyDigestWidget } from "@/components/daily-digest";
+import { LinearGradient } from "expo-linear-gradient";
+import { useTransition } from "@/lib/transition-context";
 
-const TYPE_ICONS: Record<string, { icon: any; color: string; label: string }> = {
-  text: { icon: "text.alignleft", color: "#00C9A7", label: "Notes" },
-  image: { icon: "photo.fill", color: "#D4A017", label: "Images" },
-  voice: { icon: "mic.fill", color: "#E74C3C", label: "Voice" },
-  document: { icon: "doc.fill", color: "#3498DB", label: "Docs" },
-  link: { icon: "globe", color: "#1ABC9C", label: "Links" },
+const TYPE_META: Record<string, { icon: string; color: string; label: string }> = {
+  text: { icon: "edit-note", color: "#FFD700", label: "Notes" },
+  image: { icon: "image", color: "#FFA500", label: "Images" },
+  voice: { icon: "mic", color: "#FF6B6B", label: "Voice" },
+  document: { icon: "description", color: "#4FC3F7", label: "Docs" },
+  link: { icon: "link", color: "#81C784", label: "Links" },
 };
 
 function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
   return "Good evening";
 }
 
-function getDateRange() {
-  const now = new Date();
-  return now.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
-}
-
 export default function HomeScreen() {
-  const colors = useColors();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
   const router = useRouter();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const {
     isGuest, hasCompletedOnboarding, subscription, favorites,
     loaded: appStateLoaded, setGuest, tags, activeFocusSession,
-    getPendingReminders,
+    getPendingReminders, getLatestDigest,
   } = useAppState();
+  const { triggerTransition } = useTransition();
   const [refreshing, setRefreshing] = useState(false);
 
   const isLoggedIn = isAuthenticated || isGuest;
   const pendingReminders = getPendingReminders();
+  const digest = getLatestDigest();
 
   useEffect(() => {
     if (appStateLoaded && !hasCompletedOnboarding && !authLoading) {
@@ -62,51 +57,36 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, [recentQuery, statsQuery]);
 
-  const cardBg = isDark ? "rgba(20,35,28,0.55)" : "rgba(255,255,255,0.45)";
-  const cardBorder = isDark ? "rgba(0,201,167,0.15)" : "rgba(0,201,167,0.2)";
-
   if (authLoading || !appStateLoaded) {
     return (
-      <GlassScreen screenName="home">
+      <CinematicScreen screenName="home">
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator size="large" color="#00C9A7" />
+          <ActivityIndicator size="large" color="#FFD700" />
         </View>
-      </GlassScreen>
+      </CinematicScreen>
     );
   }
 
   if (!isLoggedIn) {
     return (
-      <GlassScreen screenName="onboarding" blurIntensity={30} overlayOpacity={0.5}>
+      <CinematicScreen screenName="onboarding" overlayOpacity={0.6} edges={["top", "bottom", "left", "right"]}>
         <View style={styles.loginContainer}>
-          <View style={[styles.logoCircle, { backgroundColor: "#00C9A7" + "18" }]}>
-            <IconSymbol name="brain" size={56} color="#00C9A7" />
+          <View style={styles.loginIcon}>
+            <MaterialIcons name="psychology" size={56} color="#FFD700" />
           </View>
-          <Text style={[styles.loginTitle, { color: colors.foreground }]}>MindVault</Text>
-          <Text style={[styles.loginSubtitle, { color: colors.muted }]}>
-            Your AI-powered second brain. Capture, organize, and query your knowledge effortlessly.
+          <GoldenText variant="hero">MINDVAULT</GoldenText>
+          <Text style={styles.loginSubtitle}>
+            Your AI-powered second brain.{"\n"}Capture, organize, and query your knowledge.
           </Text>
-          <Pressable
-            onPress={() => {
+          <View style={{ width: "100%", paddingHorizontal: 24, gap: 12, marginTop: 16 }}>
+            <GoldenButton title="SIGN IN" onPress={() => {
               const { startOAuthLogin } = require("@/lib/_core/auth");
               startOAuthLogin();
-            }}
-            style={({ pressed }) => [
-              styles.primaryBtn,
-              { backgroundColor: "#00C9A7" },
-              pressed && { opacity: 0.9, transform: [{ scale: 0.97 }] },
-            ]}
-          >
-            <Text style={styles.primaryBtnText}>Sign In to Get Started</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setGuest(true)}
-            style={({ pressed }) => [pressed && { opacity: 0.7 }]}
-          >
-            <Text style={{ color: colors.muted, fontSize: 14, marginTop: 12 }}>Continue as Guest</Text>
-          </Pressable>
+            }} icon="login" variant="primary" />
+            <GoldenButton title="EXPLORE AS GUEST" onPress={() => setGuest(true)} icon="explore" variant="outline" />
+          </View>
         </View>
-      </GlassScreen>
+      </CinematicScreen>
     );
   }
 
@@ -117,32 +97,46 @@ export default function HomeScreen() {
   const byType = stats?.byType ?? {};
   const topTopics = stats?.topTopics ?? [];
 
+  const displayDigest = digest || {
+    date: new Date().toISOString(),
+    insight: "Start capturing memories and your Daily Digest will appear here.",
+    focusTopic: "Getting Started",
+    memoriesCount: 0,
+    topMemory: null,
+  };
+
   return (
-    <GlassScreen screenName="home">
+    <CinematicScreen screenName="home">
       <ScrollView
         contentContainerStyle={{ paddingBottom: 32 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00C9A7" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFD700" />}
       >
         {/* Header */}
         <View style={styles.topBar}>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.dateText, { color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.45)" }]}>{getDateRange()}</Text>
-            <Text style={[styles.greeting, { color: colors.foreground }]}>
+            <Text style={styles.dateText}>
+              {new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
+            </Text>
+            <Text style={styles.greeting}>
               {getGreeting()}, {user?.name || "Explorer"}
             </Text>
           </View>
           <View style={styles.topActions}>
             <Pressable
-              onPress={() => router.push("/guide" as any)}
-              style={({ pressed }) => [styles.glassIconBtn, { backgroundColor: cardBg, borderColor: cardBorder }, pressed && { opacity: 0.7 }]}
+              onPress={() => { triggerTransition("sparkle"); router.push("/guide" as any); }}
+              style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
             >
-              <IconSymbol name="questionmark.circle.fill" size={18} color="#00C9A7" />
+              <MaterialIcons name="menu-book" size={18} color="#FFD700" />
             </Pressable>
             <Pressable
-              onPress={() => router.push("/subscription" as any)}
-              style={({ pressed }) => [styles.glassIconBtn, { backgroundColor: cardBg, borderColor: cardBorder }, pressed && { opacity: 0.7 }]}
+              onPress={() => { triggerTransition("sparkle"); router.push("/subscription" as any); }}
+              style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.7 }]}
             >
-              <IconSymbol name={subscription === "pro" ? "crown.fill" : "person.fill"} size={18} color={subscription === "pro" ? "#D4A017" : colors.muted} />
+              <MaterialIcons
+                name={subscription === "pro" ? "workspace-premium" : "person"}
+                size={18}
+                color={subscription === "pro" ? "#FFD700" : "rgba(255,255,255,0.5)"}
+              />
             </Pressable>
           </View>
         </View>
@@ -150,115 +144,124 @@ export default function HomeScreen() {
         {/* Guest Banner */}
         {isGuest && (
           <Pressable
-            onPress={() => {
-              const { startOAuthLogin } = require("@/lib/_core/auth");
-              startOAuthLogin();
-            }}
-            style={({ pressed }) => [
-              styles.guestBanner,
-              { backgroundColor: "#D4A017" + "12", borderColor: "#D4A017" + "30" },
-              pressed && { opacity: 0.8 },
-            ]}
+            onPress={() => { const { startOAuthLogin } = require("@/lib/_core/auth"); startOAuthLogin(); }}
+            style={({ pressed }) => [styles.guestBanner, pressed && { opacity: 0.8 }]}
           >
-            <IconSymbol name="info.circle.fill" size={18} color="#D4A017" />
-            <Text style={{ color: colors.foreground, fontSize: 13, flex: 1 }}>
-              Guest mode — sign in to sync and unlock all features.
-            </Text>
-            <IconSymbol name="arrow.right" size={14} color="#00C9A7" />
+            <MaterialIcons name="info-outline" size={18} color="#FFD700" />
+            <Text style={styles.guestText}>Guest mode — sign in to sync & unlock all features</Text>
+            <MaterialIcons name="chevron-right" size={16} color="#FFD700" />
           </Pressable>
         )}
 
-        {/* Active Focus Session Banner */}
+        {/* Active Focus */}
         {activeFocusSession && (
           <Pressable
             onPress={() => router.push({ pathname: "/focus" as any, params: { folderId: activeFocusSession.folderId, folderName: activeFocusSession.folderName } })}
-            style={({ pressed }) => [
-              styles.focusBanner,
-              { backgroundColor: "#00C9A7" + "12", borderColor: "#00C9A7" + "30" },
-              pressed && { opacity: 0.8 },
-            ]}
+            style={({ pressed }) => [styles.focusBanner, pressed && { opacity: 0.8 }]}
           >
-            <IconSymbol name="scope" size={20} color="#00C9A7" />
+            <MaterialIcons name="center-focus-strong" size={20} color="#81C784" />
             <View style={{ flex: 1 }}>
-              <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: "600" }}>Focus Mode Active</Text>
-              <Text style={{ color: colors.muted, fontSize: 12 }}>
-                {activeFocusSession.folderName} · {activeFocusSession.capturedMemoryIds.length} captured
-              </Text>
+              <Text style={styles.focusTitle}>Focus Mode Active</Text>
+              <Text style={styles.focusSub}>{activeFocusSession.folderName} · {activeFocusSession.capturedMemoryIds.length} captured</Text>
             </View>
-            <IconSymbol name="arrow.right" size={14} color="#00C9A7" />
+            <MaterialIcons name="chevron-right" size={16} color="#81C784" />
           </Pressable>
         )}
 
-        {/* Tutorial Tips */}
-        <TutorialTip
-          tipKey="home_welcome"
-          icon="hand.wave.fill"
-          iconColor="#00C9A7"
-          title="Welcome to MindVault!"
-          message="Start by capturing your first memory — a note, image, or link. Tap the Capture tab below to begin."
-          actionLabel="Start Capturing"
-          onAction={() => router.push("/(tabs)/capture")}
-        />
+        {/* Tooltip for first-time users */}
+        <TooltipBubble tipId="home_quick_capture" text="Tap the bar below to quickly capture a thought, link, or file!" position="bottom" arrowSide="left" />
 
-        {/* Quick Capture */}
+        {/* Quick Capture Bar */}
         <Pressable
-          onPress={() => router.push("/(tabs)/capture")}
-          style={({ pressed }) => [
-            styles.quickCapture,
-            { backgroundColor: cardBg, borderColor: cardBorder },
-            pressed && { opacity: 0.8 },
-          ]}
+          onPress={() => { triggerTransition("sparkle"); router.push("/(tabs)/capture"); }}
+          style={({ pressed }) => [styles.captureBar, pressed && { opacity: 0.8 }]}
         >
-          <IconSymbol name="plus.circle.fill" size={22} color="#00C9A7" />
-          <Text style={[styles.quickCaptureText, { color: colors.muted }]}>
-            Capture a thought, link, or file...
-          </Text>
-          <IconSymbol name="mic.fill" size={18} color={colors.muted} />
+          <MaterialIcons name="add-circle" size={22} color="#FFD700" />
+          <Text style={styles.captureBarText}>Capture a thought, link, or file...</Text>
+          <MaterialIcons name="mic" size={18} color="rgba(255,255,255,0.3)" />
         </Pressable>
 
-        {/* Daily Digest Widget */}
+        {/* Daily Digest */}
         <View style={styles.section}>
-          <DailyDigestWidget />
+          <TooltipBubble tipId="home_daily_digest" text="Your Daily Digest surfaces the most relevant memory and insight each morning." position="bottom" arrowSide="center" />
+          <GoldenCard>
+            <View style={styles.digestHeader}>
+              <View style={styles.digestIconBg}>
+                <MaterialIcons name="wb-sunny" size={18} color="#FFD700" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.digestTitle}>Daily Digest</Text>
+                <Text style={styles.digestDate}>
+                  {new Date(displayDigest.date).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.digestFocus}>
+              <MaterialIcons name="center-focus-strong" size={14} color="#81C784" />
+              <Text style={styles.digestFocusText}>Focus: {displayDigest.focusTopic}</Text>
+            </View>
+            <Text style={styles.digestInsight} numberOfLines={3}>{displayDigest.insight}</Text>
+            {displayDigest.topMemory && (
+              <Pressable
+                onPress={() => router.push(`/memory/${displayDigest.topMemory!.id}` as any)}
+                style={({ pressed }) => [styles.digestMemory, pressed && { opacity: 0.7 }]}
+              >
+                <MaterialIcons name="star" size={14} color="#FFD700" />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.digestMemTitle} numberOfLines={1}>{displayDigest.topMemory.title}</Text>
+                  <Text style={styles.digestMemSummary} numberOfLines={1}>{displayDigest.topMemory.summary}</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={14} color="rgba(255,255,255,0.3)" />
+              </Pressable>
+            )}
+          </GoldenCard>
         </View>
 
         {/* Pending Reminders */}
         {pendingReminders.length > 0 && (
           <View style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
+            <View style={styles.sectionRow}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <IconSymbol name="bell.fill" size={16} color="#D4A017" />
-                <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Reminders</Text>
+                <MaterialIcons name="notifications-active" size={16} color="#FFA500" />
+                <Text style={styles.sectionTitle}>Reminders</Text>
               </View>
               <Pressable onPress={() => router.push("/reminders" as any)} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
-                <Text style={{ color: "#00C9A7", fontSize: 14, fontWeight: "600" }}>See All</Text>
+                <Text style={styles.seeAll}>See All</Text>
               </Pressable>
             </View>
             {pendingReminders.slice(0, 2).map((r) => (
-              <View key={r.id} style={[styles.reminderCard, { backgroundColor: cardBg, borderColor: "#D4A017" + "20" }]}>
-                <View style={[styles.reminderDot, { backgroundColor: "#D4A017" }]} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[{ fontSize: 14, fontWeight: "600", color: colors.foreground }]}>{r.title}</Text>
-                  <Text style={{ fontSize: 12, color: colors.muted }}>{new Date(r.dueDate).toLocaleDateString()}</Text>
+              <GoldenCard key={r.id} style={{ marginTop: 8 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                  <View style={styles.reminderDot} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.reminderTitle}>{r.title}</Text>
+                    <Text style={styles.reminderDate}>{new Date(r.dueDate).toLocaleDateString()}</Text>
+                  </View>
                 </View>
-              </View>
+              </GoldenCard>
             ))}
           </View>
         )}
 
         {/* Dashboard Stats */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Dashboard</Text>
+          <Text style={styles.sectionTitle}>Dashboard</Text>
           <View style={styles.statsGrid}>
             {[
-              { value: totalMemories, label: "Memories", color: "#00C9A7" },
-              { value: topTopics.length, label: "Topics", color: "#D4A017" },
-              { value: favorites.length, label: "Favorites", color: "#E67E22" },
-              { value: tags.length, label: "Tags", color: "#9B59B6" },
-            ].map((stat) => (
-              <View key={stat.label} style={[styles.statCard, { backgroundColor: stat.color + "10", borderColor: stat.color + "18" }]}>
-                <Text style={[styles.statNumber, { color: stat.color }]}>{stat.value}</Text>
-                <Text style={[styles.statLabel, { color: colors.muted }]}>{stat.label}</Text>
-              </View>
+              { value: totalMemories, label: "Memories", icon: "psychology", color: "#FFD700" },
+              { value: topTopics.length, label: "Topics", icon: "hub", color: "#FFA500" },
+              { value: favorites.length, label: "Favorites", icon: "star", color: "#FF6B6B" },
+              { value: tags.length, label: "Tags", icon: "label", color: "#81C784" },
+            ].map((s) => (
+              <LinearGradient
+                key={s.label}
+                colors={[`${s.color}15`, `${s.color}08`]}
+                style={styles.statCard}
+              >
+                <MaterialIcons name={s.icon as any} size={20} color={s.color} />
+                <Text style={[styles.statNumber, { color: s.color }]}>{s.value}</Text>
+                <Text style={styles.statLabel}>{s.label}</Text>
+              </LinearGradient>
             ))}
           </View>
         </View>
@@ -266,16 +269,16 @@ export default function HomeScreen() {
         {/* Type Breakdown */}
         {Object.keys(byType).length > 0 && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>By Type</Text>
+            <Text style={styles.sectionTitle}>By Type</Text>
             <View style={styles.typeRow}>
               {Object.entries(byType).map(([type, count]) => {
-                const info = TYPE_ICONS[type] || TYPE_ICONS.text;
+                const info = TYPE_META[type] || TYPE_META.text;
                 return (
-                  <View key={type} style={[styles.typeCard, { backgroundColor: info.color + "10", borderColor: info.color + "15" }]}>
-                    <IconSymbol name={info.icon} size={20} color={info.color} />
+                  <LinearGradient key={type} colors={[`${info.color}15`, `${info.color}08`]} style={styles.typeCard}>
+                    <MaterialIcons name={info.icon as any} size={20} color={info.color} />
                     <Text style={[styles.typeCount, { color: info.color }]}>{count as number}</Text>
-                    <Text style={[styles.typeLabel, { color: colors.muted }]}>{info.label}</Text>
-                  </View>
+                    <Text style={styles.typeLabel}>{info.label}</Text>
+                  </LinearGradient>
                 );
               })}
             </View>
@@ -285,14 +288,12 @@ export default function HomeScreen() {
         {/* Trending Topics */}
         {topTopics.length > 0 && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Trending Topics</Text>
+            <Text style={styles.sectionTitle}>Trending Topics</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={styles.topicRow}>
+              <View style={{ flexDirection: "row", gap: 8, paddingRight: 20 }}>
                 {topTopics.slice(0, 10).map((t) => (
-                  <View key={t.topic} style={[styles.topicChip, { backgroundColor: "#00C9A7" + "12", borderColor: "#00C9A7" + "20" }]}>
-                    <Text style={[styles.topicChipText, { color: "#00C9A7" }]}>
-                      {t.topic} ({t.count})
-                    </Text>
+                  <View key={t.topic} style={styles.topicChip}>
+                    <Text style={styles.topicText}>{t.topic} ({t.count})</Text>
                   </View>
                 ))}
               </View>
@@ -300,21 +301,21 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* User Tags */}
+        {/* Tags */}
         {tags.length > 0 && (
           <View style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Your Tags</Text>
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>Your Tags</Text>
               <Pressable onPress={() => router.push("/tags" as any)} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
-                <Text style={{ color: "#00C9A7", fontSize: 14, fontWeight: "600" }}>Manage</Text>
+                <Text style={styles.seeAll}>Manage</Text>
               </Pressable>
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={styles.topicRow}>
+              <View style={{ flexDirection: "row", gap: 8, paddingRight: 20 }}>
                 {tags.map((tag) => (
-                  <View key={tag.id} style={[styles.topicChip, { backgroundColor: tag.color + "15", borderColor: tag.color + "25" }]}>
+                  <View key={tag.id} style={[styles.topicChip, { borderColor: `${tag.color}40` }]}>
                     <View style={[styles.tagDot, { backgroundColor: tag.color }]} />
-                    <Text style={[styles.topicChipText, { color: tag.color }]}>{tag.name}</Text>
+                    <Text style={[styles.topicText, { color: tag.color }]}>{tag.name}</Text>
                   </View>
                 ))}
               </View>
@@ -326,33 +327,29 @@ export default function HomeScreen() {
         {favoriteMemories.length > 0 && (
           <View style={styles.section}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
-              <IconSymbol name="star.fill" size={18} color="#D4A017" />
-              <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>Favorites</Text>
+              <MaterialIcons name="star" size={18} color="#FFD700" />
+              <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Favorites</Text>
             </View>
             {favoriteMemories.slice(0, 3).map((memory) => {
-              const typeInfo = TYPE_ICONS[memory.type] || TYPE_ICONS.text;
+              const meta = TYPE_META[memory.type] || TYPE_META.text;
               return (
                 <Pressable
                   key={memory.id}
                   onPress={() => router.push(`/memory/${memory.id}` as any)}
-                  style={({ pressed }) => [
-                    styles.memoryCard,
-                    { backgroundColor: cardBg, borderColor: "#D4A017" + "25" },
-                    pressed && { opacity: 0.7 },
-                  ]}
+                  style={({ pressed }) => [pressed && { opacity: 0.7 }]}
                 >
-                  <View style={[styles.memoryIcon, { backgroundColor: typeInfo.color + "15" }]}>
-                    <IconSymbol name={typeInfo.icon} size={18} color={typeInfo.color} />
-                  </View>
-                  <View style={styles.memoryContent}>
-                    <Text style={[styles.memoryTitle, { color: colors.foreground }]} numberOfLines={1}>
-                      {memory.title}
-                    </Text>
-                    <Text style={[styles.memorySummary, { color: colors.muted }]} numberOfLines={1}>
-                      {memory.aiSummary || memory.content || "Processing..."}
-                    </Text>
-                  </View>
-                  <IconSymbol name="star.fill" size={14} color="#D4A017" />
+                  <GoldenCard style={{ marginBottom: 8, borderColor: "rgba(255,215,0,0.2)" }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                      <View style={[styles.memIcon, { backgroundColor: `${meta.color}20` }]}>
+                        <MaterialIcons name={meta.icon as any} size={18} color={meta.color} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.memTitle} numberOfLines={1}>{memory.title}</Text>
+                        <Text style={styles.memSummary} numberOfLines={1}>{memory.aiSummary || memory.content || "Processing..."}</Text>
+                      </View>
+                      <MaterialIcons name="star" size={14} color="#FFD700" />
+                    </View>
+                  </GoldenCard>
                 </Pressable>
               );
             })}
@@ -361,62 +358,56 @@ export default function HomeScreen() {
 
         {/* Recent Memories */}
         <View style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Recent Memories</Text>
+          <View style={styles.sectionRow}>
+            <Text style={styles.sectionTitle}>Recent Memories</Text>
             <Pressable onPress={() => router.push("/(tabs)/library")} style={({ pressed }) => [pressed && { opacity: 0.6 }]}>
-              <Text style={{ color: "#00C9A7", fontSize: 14, fontWeight: "600" }}>See All</Text>
+              <Text style={styles.seeAll}>See All</Text>
             </Pressable>
           </View>
 
           {recentQuery.isLoading ? (
-            <ActivityIndicator style={{ marginTop: 20 }} color="#00C9A7" />
+            <ActivityIndicator style={{ marginTop: 20 }} color="#FFD700" />
           ) : recentMemories.length === 0 ? (
-            <GlassCard>
+            <GoldenCard>
               <View style={{ alignItems: "center", paddingVertical: 24, gap: 8 }}>
-                <IconSymbol name="sparkles" size={40} color="#00C9A7" />
-                <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No memories yet</Text>
-                <Text style={[styles.emptySubtitle, { color: colors.muted }]}>
-                  Tap "Capture" to save your first thought, note, or file.
-                </Text>
+                <MaterialIcons name="auto-awesome" size={40} color="#FFD700" />
+                <Text style={styles.emptyTitle}>No memories yet</Text>
+                <Text style={styles.emptySub}>Tap "Capture" to save your first thought, note, or file.</Text>
               </View>
-            </GlassCard>
+            </GoldenCard>
           ) : (
-            <View style={{ gap: 10 }}>
+            <View style={{ gap: 8 }}>
               {recentMemories.slice(0, 5).map((memory) => {
-                const typeInfo = TYPE_ICONS[memory.type] || TYPE_ICONS.text;
+                const meta = TYPE_META[memory.type] || TYPE_META.text;
                 const isFav = favorites.includes(memory.id);
                 return (
                   <Pressable
                     key={memory.id}
                     onPress={() => router.push(`/memory/${memory.id}` as any)}
-                    style={({ pressed }) => [
-                      styles.memoryCard,
-                      { backgroundColor: cardBg, borderColor: cardBorder },
-                      pressed && { opacity: 0.7 },
-                    ]}
+                    style={({ pressed }) => [pressed && { opacity: 0.7 }]}
                   >
-                    <View style={[styles.memoryIcon, { backgroundColor: typeInfo.color + "15" }]}>
-                      <IconSymbol name={typeInfo.icon} size={18} color={typeInfo.color} />
-                    </View>
-                    <View style={styles.memoryContent}>
-                      <Text style={[styles.memoryTitle, { color: colors.foreground }]} numberOfLines={1}>
-                        {memory.title}
-                      </Text>
-                      <Text style={[styles.memorySummary, { color: colors.muted }]} numberOfLines={2}>
-                        {memory.aiSummary || memory.content || "Processing..."}
-                      </Text>
-                      {memory.aiTopics && memory.aiTopics.length > 0 && (
-                        <View style={styles.memoryTags}>
-                          {memory.aiTopics.slice(0, 3).map((topic) => (
-                            <View key={topic} style={[styles.miniTag, { backgroundColor: "#00C9A7" + "12" }]}>
-                              <Text style={{ fontSize: 11, color: "#00C9A7" }}>{topic}</Text>
-                            </View>
-                          ))}
+                    <GoldenCard>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                        <View style={[styles.memIcon, { backgroundColor: `${meta.color}20` }]}>
+                          <MaterialIcons name={meta.icon as any} size={18} color={meta.color} />
                         </View>
-                      )}
-                    </View>
-                    {isFav && <IconSymbol name="star.fill" size={14} color="#D4A017" />}
-                    {!memory.processed && <ActivityIndicator size="small" color="#00C9A7" />}
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.memTitle} numberOfLines={1}>{memory.title}</Text>
+                          <Text style={styles.memSummary} numberOfLines={2}>{memory.aiSummary || memory.content || "Processing..."}</Text>
+                          {memory.aiTopics && memory.aiTopics.length > 0 && (
+                            <View style={{ flexDirection: "row", gap: 6, marginTop: 6 }}>
+                              {memory.aiTopics.slice(0, 3).map((topic) => (
+                                <View key={topic} style={styles.miniTag}>
+                                  <Text style={styles.miniTagText}>{topic}</Text>
+                                </View>
+                              ))}
+                            </View>
+                          )}
+                        </View>
+                        {isFav && <MaterialIcons name="star" size={14} color="#FFD700" />}
+                        {!memory.processed && <ActivityIndicator size="small" color="#FFD700" />}
+                      </View>
+                    </GoldenCard>
                   </Pressable>
                 );
               })}
@@ -426,27 +417,26 @@ export default function HomeScreen() {
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Quick Actions</Text>
+          <TooltipBubble tipId="home_ask_ai" text="Use Ask AI to query your knowledge base in natural language!" position="bottom" arrowSide="left" />
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.actionsGrid}>
             {[
-              { label: "Ask AI", icon: "sparkles" as const, color: "#00C9A7", route: "/(tabs)/ask" },
-              { label: "Focus", icon: "scope" as const, color: "#D4A017", route: "/focus" },
-              { label: "Folders", icon: "folder.fill" as const, color: "#3498DB", route: "/folders" },
-              { label: "Tags", icon: "tag.fill" as const, color: "#9B59B6", route: "/tags" },
-              { label: "Reminders", icon: "bell.fill" as const, color: "#E67E22", route: "/reminders" },
-              { label: "Export", icon: "square.and.arrow.down" as const, color: "#1ABC9C", route: "/export" },
+              { label: "Ask AI", icon: "auto-awesome", color: "#FFD700", route: "/(tabs)/ask" },
+              { label: "Focus", icon: "center-focus-strong", color: "#81C784", route: "/focus" },
+              { label: "Folders", icon: "folder", color: "#4FC3F7", route: "/folders" },
+              { label: "Tags", icon: "label", color: "#CE93D8", route: "/tags" },
+              { label: "Reminders", icon: "notifications", color: "#FFA500", route: "/reminders" },
+              { label: "Export", icon: "cloud-download", color: "#80CBC4", route: "/export" },
             ].map((action) => (
               <Pressable
                 key={action.label}
-                onPress={() => router.push(action.route as any)}
-                style={({ pressed }) => [
-                  styles.actionCard,
-                  { backgroundColor: action.color + "10", borderColor: action.color + "15" },
-                  pressed && { opacity: 0.7 },
-                ]}
+                onPress={() => { triggerTransition("sparkle"); router.push(action.route as any); }}
+                style={({ pressed }) => [pressed && { opacity: 0.7 }]}
               >
-                <IconSymbol name={action.icon} size={24} color={action.color} />
-                <Text style={[styles.actionLabel, { color: colors.foreground }]}>{action.label}</Text>
+                <LinearGradient colors={[`${action.color}15`, `${action.color}08`]} style={styles.actionCard}>
+                  <MaterialIcons name={action.icon as any} size={24} color={action.color} />
+                  <Text style={styles.actionLabel}>{action.label}</Text>
+                </LinearGradient>
               </Pressable>
             ))}
           </View>
@@ -455,194 +445,99 @@ export default function HomeScreen() {
         {/* Upgrade CTA */}
         {subscription === "basic" && (
           <Pressable
-            onPress={() => router.push("/subscription" as any)}
-            style={({ pressed }) => [
-              styles.upgradeBanner,
-              { backgroundColor: "#D4A017" + "10", borderColor: "#D4A017" + "25" },
-              pressed && { opacity: 0.8 },
-            ]}
+            onPress={() => { triggerTransition("burst"); router.push("/subscription" as any); }}
+            style={({ pressed }) => [pressed && { opacity: 0.8 }]}
           >
-            <View style={styles.upgradeContent}>
-              <IconSymbol name="crown.fill" size={24} color="#D4A017" />
+            <LinearGradient colors={["rgba(255,215,0,0.12)", "rgba(255,165,0,0.06)"]} style={styles.upgradeBanner}>
+              <MaterialIcons name="workspace-premium" size={24} color="#FFD700" />
               <View style={{ flex: 1 }}>
-                <Text style={[styles.upgradeTitle, { color: colors.foreground }]}>Upgrade to Pro</Text>
-                <Text style={[styles.upgradeSubtitle, { color: colors.muted }]}>
-                  Unlimited memories, smart reminders, collaboration & more
-                </Text>
+                <Text style={styles.upgradeTitle}>Upgrade to Pro</Text>
+                <Text style={styles.upgradeSub}>Unlimited memories, smart reminders, collaboration & more</Text>
               </View>
-              <IconSymbol name="arrow.right" size={16} color="#00C9A7" />
-            </View>
+              <MaterialIcons name="chevron-right" size={16} color="#FFD700" />
+            </LinearGradient>
           </Pressable>
         )}
       </ScrollView>
-    </GlassScreen>
+    </CinematicScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 4,
+  loginContainer: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, padding: 24 },
+  loginIcon: {
+    width: 100, height: 100, borderRadius: 50,
+    backgroundColor: "rgba(255,215,0,0.08)", borderWidth: 1.5, borderColor: "rgba(255,215,0,0.2)",
+    alignItems: "center", justifyContent: "center", marginBottom: 8,
   },
-  dateText: { fontSize: 12, fontWeight: "500" },
-  greeting: { fontSize: 22, fontWeight: "700", marginTop: 2 },
+  loginSubtitle: { color: "rgba(255,255,255,0.5)", fontSize: 15, textAlign: "center", lineHeight: 22 },
+  topBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
+  dateText: { fontSize: 12, fontWeight: "500", color: "rgba(255,255,255,0.4)" },
+  greeting: { fontSize: 22, fontWeight: "700", color: "#FFFFFF", marginTop: 2 },
   topActions: { flexDirection: "row", gap: 8 },
-  glassIconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
+  headerBtn: {
+    width: 36, height: 36, borderRadius: 18,
+    backgroundColor: "rgba(255,215,0,0.08)", borderWidth: 1, borderColor: "rgba(255,215,0,0.15)",
+    alignItems: "center", justifyContent: "center",
   },
   guestBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginHorizontal: 20,
-    marginTop: 8,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 10,
+    flexDirection: "row", alignItems: "center", marginHorizontal: 20, marginTop: 8,
+    padding: 12, borderRadius: 12, borderWidth: 1,
+    backgroundColor: "rgba(255,215,0,0.06)", borderColor: "rgba(255,215,0,0.15)", gap: 10,
   },
+  guestText: { color: "rgba(255,255,255,0.6)", fontSize: 13, flex: 1 },
   focusBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginHorizontal: 20,
-    marginTop: 8,
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 10,
+    flexDirection: "row", alignItems: "center", marginHorizontal: 20, marginTop: 8,
+    padding: 12, borderRadius: 12, borderWidth: 1,
+    backgroundColor: "rgba(129,199,132,0.08)", borderColor: "rgba(129,199,132,0.2)", gap: 10,
   },
-  loginContainer: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 24 },
-  logoCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 4,
+  focusTitle: { color: "#FFFFFF", fontSize: 14, fontWeight: "600" },
+  focusSub: { color: "rgba(255,255,255,0.5)", fontSize: 12 },
+  captureBar: {
+    flexDirection: "row", alignItems: "center", marginHorizontal: 20, marginTop: 12,
+    paddingHorizontal: 16, paddingVertical: 14, borderRadius: 14, borderWidth: 1,
+    backgroundColor: "rgba(255,215,0,0.06)", borderColor: "rgba(255,215,0,0.12)", gap: 10,
   },
-  loginTitle: { fontSize: 32, fontWeight: "800" },
-  loginSubtitle: { fontSize: 15, textAlign: "center", lineHeight: 22, paddingHorizontal: 20 },
-  quickCapture: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginHorizontal: 20,
-    marginTop: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    gap: 10,
-  },
-  quickCaptureText: { fontSize: 15, flex: 1 },
+  captureBarText: { fontSize: 15, flex: 1, color: "rgba(255,255,255,0.35)" },
   section: { paddingHorizontal: 20, marginTop: 20 },
-  sectionTitle: { fontSize: 17, fontWeight: "700", marginBottom: 10 },
-  sectionHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
+  sectionTitle: { fontSize: 17, fontWeight: "700", color: "#FFFFFF", marginBottom: 10 },
+  sectionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 },
+  seeAll: { color: "#FFD700", fontSize: 14, fontWeight: "600" },
+  digestHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
+  digestIconBg: { width: 36, height: 36, borderRadius: 10, backgroundColor: "rgba(255,215,0,0.1)", alignItems: "center", justifyContent: "center" },
+  digestTitle: { fontSize: 16, fontWeight: "700", color: "#FFD700" },
+  digestDate: { fontSize: 12, color: "rgba(255,255,255,0.4)" },
+  digestFocus: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: "rgba(129,199,132,0.1)", marginTop: 8 },
+  digestFocusText: { fontSize: 13, fontWeight: "600", color: "#81C784" },
+  digestInsight: { fontSize: 14, lineHeight: 20, color: "rgba(255,255,255,0.7)", marginTop: 8 },
+  digestMemory: { flexDirection: "row", alignItems: "center", gap: 8, padding: 10, borderRadius: 10, backgroundColor: "rgba(0,0,0,0.15)", marginTop: 8 },
+  digestMemTitle: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
+  digestMemSummary: { fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 1 },
   statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  statCard: {
-    width: "47%",
-    flexGrow: 1,
-    alignItems: "center",
-    paddingVertical: 18,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
+  statCard: { width: "47%" as any, flexGrow: 1, alignItems: "center", paddingVertical: 18, borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,215,0,0.1)" },
   statNumber: { fontSize: 28, fontWeight: "800" },
-  statLabel: { fontSize: 12, marginTop: 2 },
+  statLabel: { fontSize: 12, marginTop: 2, color: "rgba(255,255,255,0.4)" },
   typeRow: { flexDirection: "row", gap: 10, flexWrap: "wrap" },
-  typeCard: {
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 4,
-    minWidth: 70,
-  },
+  typeCard: { alignItems: "center", paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,215,0,0.08)", gap: 4, minWidth: 70 },
   typeCount: { fontSize: 18, fontWeight: "700" },
-  typeLabel: { fontSize: 11 },
-  topicRow: { flexDirection: "row", gap: 8, paddingRight: 20 },
-  topicChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-    gap: 6,
-  },
-  topicChipText: { fontSize: 13, fontWeight: "600" },
+  typeLabel: { fontSize: 11, color: "rgba(255,255,255,0.4)" },
+  topicChip: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: "rgba(255,215,0,0.2)", gap: 6 },
+  topicText: { fontSize: 13, fontWeight: "600", color: "#FFD700" },
   tagDot: { width: 8, height: 8, borderRadius: 4 },
-  emptyTitle: { fontSize: 17, fontWeight: "600" },
-  emptySubtitle: { fontSize: 14, textAlign: "center", paddingHorizontal: 32 },
-  memoryCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    gap: 12,
-    marginBottom: 2,
-  },
-  memoryIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  memoryContent: { flex: 1 },
-  memoryTitle: { fontSize: 15, fontWeight: "600" },
-  memorySummary: { fontSize: 13, marginTop: 2, lineHeight: 18 },
-  memoryTags: { flexDirection: "row", gap: 6, marginTop: 6 },
-  miniTag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+  memIcon: { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  memTitle: { fontSize: 15, fontWeight: "600", color: "#FFFFFF" },
+  memSummary: { fontSize: 13, marginTop: 2, lineHeight: 18, color: "rgba(255,255,255,0.5)" },
+  miniTag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: "rgba(255,215,0,0.1)" },
+  miniTagText: { fontSize: 11, color: "#FFD700" },
+  emptyTitle: { fontSize: 17, fontWeight: "600", color: "#FFFFFF" },
+  emptySub: { fontSize: 14, textAlign: "center", paddingHorizontal: 32, color: "rgba(255,255,255,0.4)" },
   actionsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  actionCard: {
-    width: "30%",
-    flexGrow: 1,
-    alignItems: "center",
-    paddingVertical: 18,
-    borderRadius: 14,
-    borderWidth: 1,
-    gap: 6,
-  },
-  actionLabel: { fontSize: 12, fontWeight: "600" },
-  upgradeBanner: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  upgradeContent: { flexDirection: "row", alignItems: "center", gap: 12 },
-  upgradeTitle: { fontSize: 15, fontWeight: "700" },
-  upgradeSubtitle: { fontSize: 12, marginTop: 2 },
-  primaryBtn: {
-    paddingHorizontal: 28,
-    paddingVertical: 14,
-    borderRadius: 28,
-    marginTop: 8,
-  },
-  primaryBtnText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  reminderCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 10,
-    marginBottom: 6,
-  },
-  reminderDot: { width: 8, height: 8, borderRadius: 4 },
+  actionCard: { width: 105, alignItems: "center", paddingVertical: 18, borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,215,0,0.08)", gap: 6 },
+  actionLabel: { fontSize: 12, fontWeight: "600", color: "rgba(255,255,255,0.7)" },
+  upgradeBanner: { flexDirection: "row", alignItems: "center", marginHorizontal: 20, marginTop: 20, padding: 16, borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,215,0,0.2)", gap: 12 },
+  upgradeTitle: { fontSize: 15, fontWeight: "700", color: "#FFD700" },
+  upgradeSub: { fontSize: 12, marginTop: 2, color: "rgba(255,255,255,0.4)" },
+  reminderDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#FFA500" },
+  reminderTitle: { fontSize: 14, fontWeight: "600", color: "#FFFFFF" },
+  reminderDate: { fontSize: 12, color: "rgba(255,255,255,0.4)" },
 });

@@ -1,12 +1,11 @@
 import { ScrollView, Text, View, Pressable, StyleSheet, Alert } from "react-native";
-import { GlassScreen, GlassCard } from "@/components/glass-screen";
-import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
+import { CinematicScreen, GoldenCard } from "@/components/screen-background";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+
 import { useAppState, PLANS, SubscriptionTier } from "@/lib/app-state";
 import { useRouter } from "expo-router";
 
 export default function SubscriptionScreen() {
-  const colors = useColors();
   const router = useRouter();
   const { subscription, setSubscription } = useAppState();
 
@@ -47,21 +46,21 @@ export default function SubscriptionScreen() {
   };
 
   return (
-    <GlassScreen screenName="subscription" edges={["top", "bottom", "left", "right"]}>
-      <View style={[styles.header, { borderBottomColor: colors.border }]}>
+    <CinematicScreen screenName="subscription" edges={["top", "bottom", "left", "right"]}>
+      <View style={[styles.header, { borderBottomColor: "rgba(255,215,0,0.12)" }]}>
         <Pressable onPress={() => router.back()} style={({ pressed }) => [styles.backBtn, pressed && { opacity: 0.6 }]}>
-          <IconSymbol name="arrow.left" size={22} color={colors.foreground} />
+          <MaterialIcons name={"arrow-back" as any} size={22} color={"#FFFFFF"} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Subscription</Text>
+        <Text style={[styles.headerTitle, { color: "#FFFFFF" }]}>Subscription</Text>
         <View style={{ width: 30 }} />
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Hero */}
         <View style={styles.hero}>
-          <IconSymbol name="crown.fill" size={48} color="#FDCB6E" />
-          <Text style={[styles.heroTitle, { color: colors.foreground }]}>Choose Your Plan</Text>
-          <Text style={[styles.heroSubtitle, { color: colors.muted }]}>
+          <MaterialIcons name={"workspace-premium" as any} size={48} color="#FDCB6E" />
+          <Text style={[styles.heroTitle, { color: "#FFFFFF" }]}>Choose Your Plan</Text>
+          <Text style={[styles.heroSubtitle, { color: "rgba(255,255,255,0.4)" }]}>
             Unlock the full power of your AI-powered second brain
           </Text>
         </View>
@@ -78,49 +77,49 @@ export default function SubscriptionScreen() {
               style={[
                 styles.planCard,
                 {
-                  backgroundColor: colors.surface,
-                  borderColor: isActive ? colors.primary : colors.border,
+                  backgroundColor: "rgba(255,255,255,0.04)",
+                  borderColor: isActive ? "#FFD700" : "rgba(255,215,0,0.12)",
                   borderWidth: isActive ? 2 : 1,
                 },
               ]}
             >
               {isPro && (
-                <View style={[styles.popularBadge, { backgroundColor: colors.primary }]}>
-                  <IconSymbol name="star.fill" size={12} color="#fff" />
+                <View style={[styles.popularBadge, { backgroundColor: "#FFD700" }]}>
+                  <MaterialIcons name={"star-outline" as any} size={12} color="#fff" />
                   <Text style={styles.popularText}>Most Popular</Text>
                 </View>
               )}
 
               <View style={styles.planHeader}>
                 <View>
-                  <Text style={[styles.planName, { color: colors.foreground }]}>{plan.name}</Text>
-                  <Text style={[styles.planPrice, { color: isPro ? colors.primary : colors.foreground }]}>
+                  <Text style={[styles.planName, { color: "#FFFFFF" }]}>{plan.name}</Text>
+                  <Text style={[styles.planPrice, { color: isPro ? "#FFD700" : "#FFFFFF" }]}>
                     {plan.price}
                   </Text>
                   {isPro && (
-                    <Text style={[styles.planBilling, { color: colors.muted }]}>
+                    <Text style={[styles.planBilling, { color: "rgba(255,255,255,0.4)" }]}>
                       or $99.99/year (save 17%)
                     </Text>
                   )}
                 </View>
                 {isActive && (
-                  <View style={[styles.activeBadge, { backgroundColor: colors.success + "20" }]}>
-                    <IconSymbol name="checkmark.circle.fill" size={14} color={colors.success} />
-                    <Text style={{ color: colors.success, fontSize: 12, fontWeight: "600" }}>Current</Text>
+                  <View style={[styles.activeBadge, { backgroundColor: "#81C784" + "20" }]}>
+                    <MaterialIcons name={"check-circle" as any} size={14} color={"#81C784"} />
+                    <Text style={{ color: "#81C784", fontSize: 12, fontWeight: "600" }}>Current</Text>
                   </View>
                 )}
               </View>
 
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+              <View style={[styles.divider, { backgroundColor: "rgba(255,215,0,0.12)" }]} />
 
               {plan.features.map((feature, i) => (
                 <View key={i} style={styles.featureRow}>
-                  <IconSymbol
-                    name="checkmark.circle.fill"
+                  <MaterialIcons
+                    name={"check-circle" as any}
                     size={18}
-                    color={isPro ? colors.primary : colors.success}
+                    color={isPro ? "#FFD700" : "#81C784"}
                   />
-                  <Text style={[styles.featureText, { color: colors.foreground }]}>{feature}</Text>
+                  <Text style={[styles.featureText, { color: "#FFFFFF" }]}>{feature}</Text>
                 </View>
               ))}
 
@@ -130,8 +129,8 @@ export default function SubscriptionScreen() {
                   style={({ pressed }) => [
                     styles.selectBtn,
                     {
-                      backgroundColor: isPro ? colors.primary : "transparent",
-                      borderColor: isPro ? colors.primary : colors.border,
+                      backgroundColor: isPro ? "#FFD700" : "transparent",
+                      borderColor: isPro ? "#FFD700" : "rgba(255,215,0,0.12)",
                       borderWidth: isPro ? 0 : 1.5,
                     },
                     pressed && { opacity: 0.8, transform: [{ scale: 0.97 }] },
@@ -140,7 +139,7 @@ export default function SubscriptionScreen() {
                   <Text
                     style={[
                       styles.selectBtnText,
-                      { color: isPro ? "#fff" : colors.foreground },
+                      { color: isPro ? "#fff" : "#FFFFFF" },
                     ]}
                   >
                     {isPro ? "Upgrade to Pro" : "Downgrade to Basic"}
@@ -153,7 +152,7 @@ export default function SubscriptionScreen() {
 
         {/* Comparison Table */}
         <View style={styles.comparisonSection}>
-          <Text style={[styles.compTitle, { color: colors.foreground }]}>Plan Comparison</Text>
+          <Text style={[styles.compTitle, { color: "#FFFFFF" }]}>Plan Comparison</Text>
           {[
             { feature: "Memories", basic: "50", pro: "Unlimited" },
             { feature: "Folders", basic: "3", pro: "Unlimited" },
@@ -172,22 +171,22 @@ export default function SubscriptionScreen() {
               key={i}
               style={[
                 styles.compRow,
-                { backgroundColor: i % 2 === 0 ? colors.surface : "transparent" },
+                { backgroundColor: i % 2 === 0 ? "rgba(255,255,255,0.04)" : "transparent" },
               ]}
             >
-              <Text style={[styles.compFeature, { color: colors.foreground }]}>{row.feature}</Text>
-              <Text style={[styles.compValue, { color: colors.muted }]}>{row.basic}</Text>
-              <Text style={[styles.compValue, { color: colors.primary, fontWeight: "600" }]}>{row.pro}</Text>
+              <Text style={[styles.compFeature, { color: "#FFFFFF" }]}>{row.feature}</Text>
+              <Text style={[styles.compValue, { color: "rgba(255,255,255,0.4)" }]}>{row.basic}</Text>
+              <Text style={[styles.compValue, { color: "#FFD700", fontWeight: "600" }]}>{row.pro}</Text>
             </View>
           ))}
-          <View style={[styles.compRow, { backgroundColor: colors.surface }]}>
-            <Text style={[styles.compFeature, { color: colors.muted, fontWeight: "700", fontSize: 12 }]}>Feature</Text>
-            <Text style={[styles.compValue, { color: colors.muted, fontWeight: "700", fontSize: 12 }]}>Basic</Text>
-            <Text style={[styles.compValue, { color: colors.primary, fontWeight: "700", fontSize: 12 }]}>Pro</Text>
+          <View style={[styles.compRow, { backgroundColor: "rgba(255,255,255,0.04)" }]}>
+            <Text style={[styles.compFeature, { color: "rgba(255,255,255,0.4)", fontWeight: "700", fontSize: 12 }]}>Feature</Text>
+            <Text style={[styles.compValue, { color: "rgba(255,255,255,0.4)", fontWeight: "700", fontSize: 12 }]}>Basic</Text>
+            <Text style={[styles.compValue, { color: "#FFD700", fontWeight: "700", fontSize: 12 }]}>Pro</Text>
           </View>
         </View>
       </ScrollView>
-    </GlassScreen>
+    </CinematicScreen>
   );
 }
 

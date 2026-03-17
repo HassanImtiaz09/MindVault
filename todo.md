@@ -83,3 +83,26 @@
 - [x] Daily Digest home widget - surface relevant memory each morning
 - [x] Daily Digest - based on user's recent focus areas
 - [x] Unit tests for all new features (95 tests passing)
+
+## Phase 5 - Spectacular Mobile UI Skill
+- [x] Update theme to cinematic dark (#0A0E1A) + gold (#FFD700) palette
+- [x] Create ScreenBackground component with animated drift and golden vignette
+- [x] Create GoldenButton component (primary/secondary/outline variants)
+- [x] Create GoldenText component (hero/title/subtitle/label variants)
+- [x] Upload NanoBanana images as S3 URLs for ScreenBackground
+- [x] Create TransitionProvider context for golden light-burst transitions
+- [x] Create GoldenTransitionOverlay animated component
+- [x] Wire transitions to tab switches (sparkle) and navigation (burst/sweep)
+- [x] Create tooltip store with AsyncStorage persistence
+- [x] Create TooltipBubble component with golden styling
+- [x] Add contextual tooltips to all major interactive elements
+- [x] Revamp onboarding to 5-slide cinematic flow with subscription upsell
+- [x] Revamp Home screen with ScreenBackground + golden theme
+- [x] Revamp Capture screen with ScreenBackground + golden theme
+- [x] Revamp Library screen with ScreenBackground + golden theme
+- [x] Revamp Ask AI screen with ScreenBackground + golden theme
+- [x] Revamp Insights screen with ScreenBackground + golden theme
+- [x] Revamp all detail/modal screens with ScreenBackground + golden theme
+- [x] Update tab bar to transparent dark with golden accents
+- [x] Wire guest mode exit with welcome tour option
+- [x] Test all transitions, tooltips, and backgrounds (95 tests passing)

@@ -18,6 +18,8 @@ import type { EdgeInsets, Metrics, Rect } from "react-native-safe-area-context";
 
 import { trpc, createTRPCClient } from "@/lib/trpc";
 import { AppStateProvider } from "@/lib/app-state";
+import { TransitionProvider } from "@/lib/transition-context";
+import { GoldenTransitionOverlay } from "@/components/golden-transition-overlay";
 import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-runtime";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
@@ -82,6 +84,7 @@ export default function RootLayout() {
   const content = (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <AppStateProvider>
+      <TransitionProvider>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
           {/* Default to hiding native headers so raw route segments don't appear (e.g. "(tabs)", "products/[id]"). */}
@@ -102,9 +105,11 @@ export default function RootLayout() {
             <Stack.Screen name="collaborate" options={{ presentation: "modal" }} />
             <Stack.Screen name="oauth/callback" />
           </Stack>
-          <StatusBar style="auto" />
+          <StatusBar style="light" />
+          <GoldenTransitionOverlay />
         </QueryClientProvider>
       </trpc.Provider>
+      </TransitionProvider>
       </AppStateProvider>
     </GestureHandlerRootView>
   );
