@@ -31,7 +31,7 @@ export default function CollaborateScreen() {
     setEmail("");
   };
 
-  const cardBg = isDark ? "rgba(20,35,28,0.6)" : "rgba(255,255,255,0.5)";
+  const cardBg = isDark ? "rgba(8,12,28,0.92)" : "rgba(255,255,255,0.5)";
   const cardBorder = isDark ? "rgba(0,201,167,0.15)" : "rgba(0,201,167,0.2)";
 
   return (
@@ -40,7 +40,7 @@ export default function CollaborateScreen() {
       {Platform.OS !== "web" ? (
         <BlurView intensity={45} tint={isDark ? "dark" : "light"} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
       ) : (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? "rgba(10,18,15,0.7)" : "rgba(240,255,248,0.6)", backdropFilter: "blur(18px)" } as any]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? "rgba(8,12,28,0.92)" : "rgba(240,255,248,0.6)", backdropFilter: "blur(18px)" } as any]} />
       )}
       <LinearGradient
         colors={isDark
@@ -57,7 +57,7 @@ export default function CollaborateScreen() {
           </Pressable>
           <View style={{ flex: 1, marginLeft: 12 }}>
             <Text style={[styles.headerTitle, { color: "#FFFFFF" }]}>Share Folder</Text>
-            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 13 }}>{folderName}</Text>
+            <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>{folderName}</Text>
           </View>
         </View>
 
@@ -66,7 +66,7 @@ export default function CollaborateScreen() {
           <View style={[styles.addCard, { backgroundColor: cardBg, borderColor: "#00C9A7" + "30" }]}>
             <Text style={[styles.addTitle, { color: "#00C9A7" }]}>Invite Collaborator</Text>
             <TextInput
-              style={[styles.input, { color: "#FFFFFF", borderColor: cardBorder, backgroundColor: isDark ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.5)" }]}
+              style={[styles.input, { color: "#FFFFFF", borderColor: cardBorder, backgroundColor: isDark ? "rgba(8,12,28,0.90)" : "rgba(255,255,255,0.5)" }]}
               placeholder="Email address..."
               placeholderTextColor={"rgba(255,255,255,0.4)"}
               value={email}
@@ -109,7 +109,7 @@ export default function CollaborateScreen() {
           </View>
 
           {/* Collaborators list */}
-          <Text style={[styles.sectionLabel, { color: "rgba(255,255,255,0.4)" }]}>
+          <Text style={[styles.sectionLabel, { color: "rgba(255,255,255,0.7)" }]}>
             {collaborators.length} collaborator{collaborators.length !== 1 ? "s" : ""}
           </Text>
 
@@ -121,7 +121,7 @@ export default function CollaborateScreen() {
               <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
                 <MaterialIcons name={"group" as any} size={36} color="#00C9A7" />
                 <Text style={[styles.emptyTitle, { color: "#FFFFFF" }]}>No Collaborators</Text>
-                <Text style={[styles.emptySubtitle, { color: "rgba(255,255,255,0.4)" }]}>
+                <Text style={[styles.emptySubtitle, { color: "rgba(255,255,255,0.7)" }]}>
                   Invite team members to view or edit this folder's contents together.
                 </Text>
               </View>

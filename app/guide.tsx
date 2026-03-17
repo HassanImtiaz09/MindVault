@@ -192,7 +192,7 @@ export default function GuideScreen() {
         <View style={styles.intro}>
           <MaterialIcons name={"help" as any} size={36} color={"#FFD700"} />
           <Text style={[styles.introTitle, { color: "#FFFFFF" }]}>How to Use MindVault</Text>
-          <Text style={[styles.introSubtitle, { color: "rgba(255,255,255,0.4)" }]}>
+          <Text style={[styles.introSubtitle, { color: "rgba(255,255,255,0.7)" }]}>
             Tap any section below to learn more about each feature
           </Text>
         </View>
@@ -206,7 +206,7 @@ export default function GuideScreen() {
                 style={({ pressed }) => [
                   styles.sectionHeader,
                   {
-                    backgroundColor: "rgba(255,255,255,0.04)",
+                    backgroundColor: "rgba(8,12,28,0.88)",
                     borderColor: isExpanded ? "#FFD700" : "rgba(255,215,0,0.12)",
                     borderWidth: isExpanded ? 1.5 : 1,
                   },
@@ -225,7 +225,7 @@ export default function GuideScreen() {
                 />
               </Pressable>
               {isExpanded && (
-                <View style={[styles.sectionContent, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
+                <View style={[styles.sectionContent, { backgroundColor: "rgba(8,12,28,0.88)", borderColor: "rgba(255,215,0,0.22)" }]}>
                   {section.content.map((line, i) => (
                     <Text key={i} style={[styles.contentLine, { color: "#FFFFFF" }]}>
                       {line}

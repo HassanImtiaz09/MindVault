@@ -134,13 +134,13 @@ export default function FocusScreen() {
         {/* Timer Circle */}
         <View style={styles.timerContainer}>
           <Animated.View style={[styles.pulseRing, { borderColor: "#FFD700" }, pulseStyle]} />
-          <View style={[styles.timerCircle, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "#FFD700" + "30" }]}>
+          <View style={[styles.timerCircle, { backgroundColor: "rgba(8,12,28,0.88)", borderColor: "#FFD700" + "30" }]}>
             {isRunning ? (
               <>
                 <Text style={[styles.timerText, { color: "#FFFFFF" }]}>
                   {String(minutes).padStart(2, "0")}:{String(seconds).padStart(2, "0")}
                 </Text>
-                <Text style={[styles.timerLabel, { color: "rgba(255,255,255,0.4)" }]}>
+                <Text style={[styles.timerLabel, { color: "rgba(255,255,255,0.7)" }]}>
                   {isPaused ? "Paused" : "Focusing..."}
                 </Text>
                 {captured > 0 && (
@@ -155,7 +155,7 @@ export default function FocusScreen() {
               <>
                 <MaterialIcons name={"my-location" as any} size={48} color={"#FFD700"} />
                 <Text style={[styles.readyText, { color: "#FFFFFF" }]}>Ready to Focus</Text>
-                <Text style={[styles.readySubtext, { color: "rgba(255,255,255,0.4)" }]}>
+                <Text style={[styles.readySubtext, { color: "rgba(255,255,255,0.7)" }]}>
                   Deep work, no distractions
                 </Text>
               </>
@@ -166,7 +166,7 @@ export default function FocusScreen() {
         {/* Duration Selection */}
         {!isRunning && (
           <View style={styles.durationSection}>
-            <Text style={[styles.durationLabel, { color: "rgba(255,255,255,0.4)" }]}>Session Duration</Text>
+            <Text style={[styles.durationLabel, { color: "rgba(255,255,255,0.7)" }]}>Session Duration</Text>
             <View style={styles.durationRow}>
               {DURATIONS.map((d) => (
                 <Pressable
@@ -236,7 +236,7 @@ export default function FocusScreen() {
                 onPress={handlePause}
                 style={({ pressed }) => [
                   styles.controlBtn,
-                  { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" },
+                  { backgroundColor: "rgba(8,12,28,0.88)", borderColor: "rgba(255,215,0,0.22)" },
                   pressed && { opacity: 0.7 },
                 ]}
               >
@@ -269,11 +269,11 @@ export default function FocusScreen() {
 
         {/* Tips */}
         {!isRunning && (
-          <View style={[styles.tipsCard, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
+          <View style={[styles.tipsCard, { backgroundColor: "rgba(8,12,28,0.88)", borderColor: "rgba(255,215,0,0.22)" }]}>
             <MaterialIcons name={"eco" as any} size={18} color={"#FFD700"} />
             <View style={{ flex: 1 }}>
               <Text style={[styles.tipTitle, { color: "#FFFFFF" }]}>Focus Tips</Text>
-              <Text style={[styles.tipText, { color: "rgba(255,255,255,0.4)" }]}>
+              <Text style={[styles.tipText, { color: "rgba(255,255,255,0.7)" }]}>
                 Put your phone on Do Not Disturb. Capture ideas quickly during your session — they'll be saved to your paired folder.
               </Text>
             </View>

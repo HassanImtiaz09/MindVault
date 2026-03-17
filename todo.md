@@ -116,3 +116,8 @@
 - [x] Optimize and upload all 5 images to S3
 - [x] Update constants/images.ts with new tab-specific URLs
 - [x] Apply new backgrounds to each tab screen
+
+## Phase 7 - Login Fix, Parallax, Contrast
+- [x] Fix login error in app preview
+- [x] Add parallax scrolling effect to CinematicScreen backgrounds
+- [x] Increase text box and card contrast for better readability (95 tests passing)

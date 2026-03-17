@@ -222,7 +222,7 @@ export default function MemoryDetailScreen() {
 
 const styles = StyleSheet.create({
   centerFull: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 24 },
-  emptyText: { fontSize: 16, color: "rgba(255,255,255,0.4)" },
+  emptyText: { fontSize: 16, color: "rgba(255,255,255,0.7)" },
   backLink: { color: "#FFD700", marginTop: 12, fontWeight: "600" },
   header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: "rgba(255,215,0,0.08)" },
   backBtn: { padding: 4 },
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   tagChip: { flexDirection: "row", alignItems: "center", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, gap: 5 },
   tagDot: { width: 8, height: 8, borderRadius: 4 },
-  processingBanner: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 10, marginHorizontal: 20, marginTop: 16, borderRadius: 10, backgroundColor: "rgba(255,215,0,0.06)" },
+  processingBanner: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 10, marginHorizontal: 20, marginTop: 16, borderRadius: 10, backgroundColor: "rgba(15,20,40,0.90)" },
   aiCardHeader: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 },
   aiCardTitle: { fontSize: 14, fontWeight: "700", color: "#FFD700" },
   aiCardText: { fontSize: 15, lineHeight: 22, color: "rgba(255,255,255,0.7)" },
@@ -243,6 +243,6 @@ const styles = StyleSheet.create({
   topicChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20 },
   insightRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 8 },
   insightDot: { width: 8, height: 8, borderRadius: 4, marginTop: 6 },
-  insightText: { fontSize: 14, lineHeight: 20, flex: 1, color: "rgba(255,255,255,0.6)" },
-  contentText: { fontSize: 14, lineHeight: 21, color: "rgba(255,255,255,0.6)" },
+  insightText: { fontSize: 14, lineHeight: 20, flex: 1, color: "rgba(255,255,255,0.8)" },
+  contentText: { fontSize: 14, lineHeight: 21, color: "rgba(255,255,255,0.8)" },
 });

@@ -134,7 +134,7 @@ const bubbleStyles = StyleSheet.create({
   bubble: {
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "rgba(255,215,0,0.2)",
+    borderColor: "rgba(255,215,0,0.35)",
     overflow: "hidden",
     ...Platform.select({
       ios: {

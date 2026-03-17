@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    backgroundColor: "rgba(255,215,0,0.08)",
+    backgroundColor: "rgba(15,20,40,0.88)",
     borderWidth: 1.5,
     borderColor: "rgba(255,215,0,0.2)",
     justifyContent: "center",
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
   },
   desc: {
     fontSize: 15,
-    color: "rgba(255,255,255,0.6)",
+    color: "rgba(255,255,255,0.8)",
     textAlign: "center",
     lineHeight: 22,
     marginTop: 16,
@@ -399,14 +399,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   skipText: {
-    color: "rgba(255,255,255,0.4)",
+    color: "rgba(255,255,255,0.7)",
     fontSize: 14,
     fontWeight: "500",
   },
   planCard: {
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderColor: "rgba(255,255,255,0.18)",
     backgroundColor: "rgba(15,20,40,0.8)",
     padding: 16,
     gap: 4,
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   },
   planFeature: {
     fontSize: 13,
-    color: "rgba(255,255,255,0.5)",
+    color: "rgba(255,255,255,0.75)",
     lineHeight: 20,
   },
   badge: {

@@ -134,7 +134,7 @@ export default function AskScreen() {
           {loading && (
             <View style={styles.loadingRow}>
               <ActivityIndicator size="small" color="#FFD700" />
-              <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, marginLeft: 8 }}>Thinking...</Text>
+              <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, marginLeft: 8 }}>Thinking...</Text>
             </View>
           )}
 
@@ -231,32 +231,32 @@ export default function AskScreen() {
 
 const styles = StyleSheet.create({
   centerFull: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, padding: 24 },
-  loginText: { fontSize: 16, color: "rgba(255,255,255,0.4)", textAlign: "center" },
+  loginText: { fontSize: 16, color: "rgba(255,255,255,0.7)", textAlign: "center" },
   header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
   tabRow: { flexDirection: "row", paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: "rgba(255,215,0,0.08)" },
   tabBtn: { flexDirection: "row", alignItems: "center", paddingVertical: 12, paddingHorizontal: 16, gap: 6, borderBottomWidth: 2 },
   msgBubble: { maxWidth: "80%", paddingHorizontal: 16, paddingVertical: 12, borderRadius: 18 },
   userBubble: { alignSelf: "flex-end", backgroundColor: "#FFD700" },
-  aiBubble: { alignSelf: "flex-start", backgroundColor: "rgba(255,215,0,0.06)", borderWidth: 1, borderColor: "rgba(255,215,0,0.12)" },
+  aiBubble: { alignSelf: "flex-start", backgroundColor: "rgba(15,20,40,0.90)", borderWidth: 1, borderColor: "rgba(255,215,0,0.22)" },
   emptyChat: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 20, gap: 8 },
   emptyChatTitle: { fontSize: 18, fontWeight: "600", color: "#FFFFFF" },
-  emptyChatSub: { fontSize: 14, textAlign: "center", color: "rgba(255,255,255,0.4)" },
+  emptyChatSub: { fontSize: 14, textAlign: "center", color: "rgba(255,255,255,0.7)" },
   suggestedList: { gap: 8, marginTop: 16, width: "100%" },
   loadingRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", paddingVertical: 8 },
   inputBar: { flexDirection: "row", alignItems: "flex-end", paddingHorizontal: 16, paddingVertical: 10, borderTopWidth: 0.5, borderTopColor: "rgba(255,215,0,0.08)", gap: 8 },
-  chatInput: { flex: 1, fontSize: 15, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 22, borderWidth: 1, borderColor: "rgba(255,215,0,0.12)", backgroundColor: "rgba(255,255,255,0.04)", color: "#FFFFFF", maxHeight: 100 },
+  chatInput: { flex: 1, fontSize: 15, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 22, borderWidth: 1, borderColor: "rgba(255,215,0,0.22)", backgroundColor: "rgba(8,12,28,0.88)", color: "#FFFFFF", maxHeight: 100 },
   sendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
-  ideaLabel: { fontSize: 15, fontWeight: "600", marginBottom: 10, color: "rgba(255,255,255,0.6)" },
-  ideaInputRow: { flexDirection: "row", alignItems: "flex-end", borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,215,0,0.12)", backgroundColor: "rgba(255,255,255,0.04)", paddingLeft: 14, paddingRight: 6, paddingVertical: 6, gap: 8 },
+  ideaLabel: { fontSize: 15, fontWeight: "600", marginBottom: 10, color: "rgba(255,255,255,0.8)" },
+  ideaInputRow: { flexDirection: "row", alignItems: "flex-end", borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,215,0,0.22)", backgroundColor: "rgba(8,12,28,0.88)", paddingLeft: 14, paddingRight: 6, paddingVertical: 6, gap: 8 },
   ideaInput: { flex: 1, fontSize: 15, paddingVertical: 8, maxHeight: 80, color: "#FFFFFF" },
   generateBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 2 },
   ideaHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
   ideaNumber: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   ideaNumberText: { fontSize: 14, fontWeight: "800", color: "#FFD700" },
   ideaTitle: { fontSize: 16, fontWeight: "600", flex: 1, color: "#FFFFFF" },
-  ideaDesc: { fontSize: 14, lineHeight: 20, marginTop: 8, color: "rgba(255,255,255,0.5)" },
+  ideaDesc: { fontSize: 14, lineHeight: 20, marginTop: 8, color: "rgba(255,255,255,0.75)" },
   ideaTopics: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 10 },
   ideaTag: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: "rgba(255,215,0,0.1)" },
   emptyIdeas: { alignItems: "center", paddingTop: 60, gap: 8 },
-  emptyIdeasText: { color: "rgba(255,255,255,0.4)", fontSize: 14, textAlign: "center", marginTop: 8 },
+  emptyIdeasText: { color: "rgba(255,255,255,0.7)", fontSize: 14, textAlign: "center", marginTop: 8 },
 });

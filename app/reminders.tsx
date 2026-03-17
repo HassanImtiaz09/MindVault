@@ -39,7 +39,7 @@ export default function RemindersScreen() {
     setShowAdd(false);
   };
 
-  const cardBg = isDark ? "rgba(20,35,28,0.6)" : "rgba(255,255,255,0.5)";
+  const cardBg = isDark ? "rgba(8,12,28,0.92)" : "rgba(255,255,255,0.5)";
   const cardBorder = isDark ? "rgba(0,201,167,0.15)" : "rgba(0,201,167,0.2)";
 
   return (
@@ -48,7 +48,7 @@ export default function RemindersScreen() {
       {Platform.OS !== "web" ? (
         <BlurView intensity={45} tint={isDark ? "dark" : "light"} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
       ) : (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? "rgba(10,18,15,0.7)" : "rgba(240,255,248,0.6)", backdropFilter: "blur(18px)" } as any]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? "rgba(8,12,28,0.92)" : "rgba(240,255,248,0.6)", backdropFilter: "blur(18px)" } as any]} />
       )}
       <LinearGradient
         colors={isDark
@@ -74,14 +74,14 @@ export default function RemindersScreen() {
           <View style={[styles.addCard, { backgroundColor: cardBg, borderColor: "#D4A017" + "40" }]}>
             <Text style={[styles.addTitle, { color: "#D4A017" }]}>New Reminder</Text>
             <TextInput
-              style={[styles.input, { color: "#FFFFFF", borderColor: cardBorder, backgroundColor: isDark ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.5)" }]}
+              style={[styles.input, { color: "#FFFFFF", borderColor: cardBorder, backgroundColor: isDark ? "rgba(8,12,28,0.90)" : "rgba(255,255,255,0.5)" }]}
               placeholder="Reminder title..."
               placeholderTextColor={"rgba(255,255,255,0.4)"}
               value={title}
               onChangeText={setTitle}
             />
             <TextInput
-              style={[styles.input, { color: "#FFFFFF", borderColor: cardBorder, backgroundColor: isDark ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.5)" }]}
+              style={[styles.input, { color: "#FFFFFF", borderColor: cardBorder, backgroundColor: isDark ? "rgba(8,12,28,0.90)" : "rgba(255,255,255,0.5)" }]}
               placeholder="Description (optional)..."
               placeholderTextColor={"rgba(255,255,255,0.4)"}
               value={desc}
@@ -90,7 +90,7 @@ export default function RemindersScreen() {
             />
             <View style={styles.addActions}>
               <Pressable onPress={() => setShowAdd(false)} style={({ pressed }) => [styles.cancelBtn, pressed && { opacity: 0.7 }]}>
-                <Text style={{ color: "rgba(255,255,255,0.4)", fontWeight: "600" }}>Cancel</Text>
+                <Text style={{ color: "rgba(255,255,255,0.7)", fontWeight: "600" }}>Cancel</Text>
               </Pressable>
               <Pressable
                 onPress={handleAdd}
@@ -118,7 +118,7 @@ export default function RemindersScreen() {
             <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
               <MaterialIcons name={"notifications" as any} size={40} color="#D4A017" />
               <Text style={[styles.emptyTitle, { color: "#FFFFFF" }]}>No Reminders Yet</Text>
-              <Text style={[styles.emptySubtitle, { color: "rgba(255,255,255,0.4)" }]}>
+              <Text style={[styles.emptySubtitle, { color: "rgba(255,255,255,0.7)" }]}>
                 AI will detect action items in your notes and suggest reminders automatically. You can also add them manually.
               </Text>
             </View>
@@ -129,7 +129,7 @@ export default function RemindersScreen() {
             return (
               <>
                 {showCompletedHeader && (
-                  <Text style={[styles.sectionLabel, { color: "rgba(255,255,255,0.4)", marginTop: 16 }]}>Completed</Text>
+                  <Text style={[styles.sectionLabel, { color: "rgba(255,255,255,0.7)", marginTop: 16 }]}>Completed</Text>
                 )}
                 <View style={[styles.reminderCard, { backgroundColor: cardBg, borderColor: isCompleted ? cardBorder : "#D4A017" + "30" }]}>
                   <Pressable
@@ -150,7 +150,7 @@ export default function RemindersScreen() {
                       {item.title}
                     </Text>
                     {item.description ? (
-                      <Text style={[styles.reminderDesc, { color: "rgba(255,255,255,0.4)" }]} numberOfLines={2}>
+                      <Text style={[styles.reminderDesc, { color: "rgba(255,255,255,0.7)" }]} numberOfLines={2}>
                         {item.description}
                       </Text>
                     ) : null}

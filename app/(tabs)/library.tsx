@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { Text, View, TextInput, Pressable, ActivityIndicator, FlatList, RefreshControl, StyleSheet, ScrollView } from "react-native";
-import { CinematicScreen, GoldenCard } from "@/components/screen-background";
+import { CinematicScreen, GoldenCard, useParallax } from "@/components/screen-background";
 import { GoldenText } from "@/components/golden-text";
 import { TooltipBubble } from "@/components/tooltip-bubble";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
@@ -38,6 +38,7 @@ export default function LibraryScreen() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [activeTagId, setActiveTagId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const parallax = useParallax();
   const isLoggedIn = isAuthenticated || isGuest;
 
   const memoriesQuery = trpc.memories.list.useQuery(
@@ -208,11 +209,11 @@ export default function LibraryScreen() {
 
 const styles = StyleSheet.create({
   centerFull: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, padding: 24 },
-  loginText: { fontSize: 16, color: "rgba(255,255,255,0.4)", textAlign: "center" },
+  loginText: { fontSize: 16, color: "rgba(255,255,255,0.7)", textAlign: "center" },
   headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
   headerActions: { flexDirection: "row", gap: 8 },
-  headerBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(255,215,0,0.08)", borderWidth: 1, borderColor: "rgba(255,215,0,0.15)", alignItems: "center", justifyContent: "center" },
-  searchBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,215,0,0.12)", backgroundColor: "rgba(255,255,255,0.04)", gap: 8 },
+  headerBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(15,20,40,0.88)", borderWidth: 1, borderColor: "rgba(255,215,0,0.25)", alignItems: "center", justifyContent: "center" },
+  searchBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,215,0,0.22)", backgroundColor: "rgba(8,12,28,0.88)", gap: 8 },
   searchInput: { flex: 1, fontSize: 15, color: "#FFFFFF" },
   filterRow: { flexDirection: "row", paddingHorizontal: 20, gap: 8 },
   filterChip: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1, gap: 4 },
@@ -221,12 +222,12 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontWeight: "600", flex: 1, marginRight: 8, color: "#FFFFFF" },
   cardMeta: { flexDirection: "row", alignItems: "center", gap: 4 },
   cardDate: { fontSize: 12, color: "rgba(255,255,255,0.35)" },
-  cardSummary: { fontSize: 13, marginTop: 3, lineHeight: 18, color: "rgba(255,255,255,0.5)" },
+  cardSummary: { fontSize: 13, marginTop: 3, lineHeight: 18, color: "rgba(255,255,255,0.75)" },
   tagRow: { flexDirection: "row", gap: 6, marginTop: 6, flexWrap: "wrap" },
   aiTag: { flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: "rgba(255,215,0,0.1)", gap: 4 },
   aiTagText: { fontSize: 11, color: "#FFD700" },
   tagDot: { width: 6, height: 6, borderRadius: 3 },
   emptyState: { alignItems: "center", paddingTop: 60, gap: 8 },
   emptyTitle: { fontSize: 17, fontWeight: "600", color: "#FFFFFF" },
-  emptySub: { fontSize: 14, textAlign: "center", color: "rgba(255,255,255,0.4)" },
+  emptySub: { fontSize: 14, textAlign: "center", color: "rgba(255,255,255,0.7)" },
 });

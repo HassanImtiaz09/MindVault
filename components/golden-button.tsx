@@ -40,7 +40,7 @@ export function GoldenButton({
             justifyContent: "center" as const,
             borderWidth: 1.5,
             borderColor: "rgba(255,215,0,0.4)",
-            backgroundColor: "rgba(255,215,0,0.06)",
+            backgroundColor: "rgba(15,20,40,0.90)",
             paddingHorizontal: 24,
             paddingVertical: paddingV,
             borderRadius,

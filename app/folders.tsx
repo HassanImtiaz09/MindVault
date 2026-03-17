@@ -105,14 +105,14 @@ export default function FoldersScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         {/* Create Form */}
         {showCreate && (
-          <View style={[styles.createForm, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
+          <View style={[styles.createForm, { backgroundColor: "rgba(8,12,28,0.88)", borderColor: "rgba(255,215,0,0.22)" }]}>
             <Text style={[styles.createLabel, { color: "#FFFFFF" }]}>New Folder</Text>
             <TextInput
               value={newName}
               onChangeText={setNewName}
               placeholder="Folder name..."
               placeholderTextColor={"rgba(255,255,255,0.4)"}
-              style={[styles.nameInput, { color: "#FFFFFF", borderColor: "rgba(255,215,0,0.12)", backgroundColor: "#0A0E1A" }]}
+              style={[styles.nameInput, { color: "#FFFFFF", borderColor: "rgba(255,215,0,0.22)", backgroundColor: "#0A0E1A" }]}
               returnKeyType="done"
               onSubmitEditing={handleCreate}
             />
@@ -130,8 +130,8 @@ export default function FoldersScreen() {
               ))}
             </View>
             <View style={styles.createActions}>
-              <Pressable onPress={() => setShowCreate(false)} style={({ pressed }) => [styles.cancelBtn, { borderColor: "rgba(255,215,0,0.12)" }, pressed && { opacity: 0.7 }]}>
-                <Text style={{ color: "rgba(255,255,255,0.4)", fontWeight: "600" }}>Cancel</Text>
+              <Pressable onPress={() => setShowCreate(false)} style={({ pressed }) => [styles.cancelBtn, { borderColor: "rgba(255,215,0,0.22)" }, pressed && { opacity: 0.7 }]}>
+                <Text style={{ color: "rgba(255,255,255,0.7)", fontWeight: "600" }}>Cancel</Text>
               </Pressable>
               <Pressable
                 onPress={handleCreate}
@@ -149,7 +149,7 @@ export default function FoldersScreen() {
           <View style={styles.emptyState}>
             <MaterialIcons name={"folder" as any} size={48} color={"rgba(255,255,255,0.4)"} />
             <Text style={[styles.emptyTitle, { color: "#FFFFFF" }]}>No Folders Yet</Text>
-            <Text style={[styles.emptySubtitle, { color: "rgba(255,255,255,0.4)" }]}>
+            <Text style={[styles.emptySubtitle, { color: "rgba(255,255,255,0.7)" }]}>
               Create folders to organize your memories by topic, project, or category.
             </Text>
             <Pressable
@@ -169,7 +169,7 @@ export default function FoldersScreen() {
                 onLongPress={() => handleDelete(folder.id)}
                 style={({ pressed }) => [
                   styles.folderCard,
-                  { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" },
+                  { backgroundColor: "rgba(8,12,28,0.88)", borderColor: "rgba(255,215,0,0.22)" },
                   pressed && { opacity: 0.7 },
                 ]}
               >
@@ -178,7 +178,7 @@ export default function FoldersScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.folderName, { color: "#FFFFFF" }]}>{folder.name}</Text>
-                  <Text style={[styles.folderCount, { color: "rgba(255,255,255,0.4)" }]}>
+                  <Text style={[styles.folderCount, { color: "rgba(255,255,255,0.7)" }]}>
                     {folder.memoryIds.length} {folder.memoryIds.length === 1 ? "memory" : "memories"}
                   </Text>
                 </View>

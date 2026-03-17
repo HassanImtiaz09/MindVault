@@ -13,8 +13,8 @@ export function DailyDigestWidget() {
   const { getLatestDigest, dailyDigestEnabled, canUseFeature } = useAppState();
 
   const digest = getLatestDigest();
-  const cardBg = isDark ? "rgba(20,35,28,0.55)" : "rgba(255,255,255,0.45)";
-  const cardBorder = isDark ? "rgba(212,160,23,0.2)" : "rgba(212,160,23,0.25)";
+  const cardBg = "rgba(6,10,24,0.92)";
+  const cardBorder = "rgba(255,215,0,0.25)";
 
   // Show sample digest if none exists yet
   const displayDigest = digest || {

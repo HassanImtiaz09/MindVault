@@ -106,7 +106,7 @@ export default function ExportScreen() {
             <Text style={[styles.infoTitle, { color: "#FFFFFF" }]}>
               Export Your Knowledge
             </Text>
-            <Text style={[styles.infoText, { color: "rgba(255,255,255,0.4)" }]}>
+            <Text style={[styles.infoText, { color: "rgba(255,255,255,0.7)" }]}>
               Download your entire knowledge base as Markdown or JSON files for offline backup or migration.
             </Text>
           </View>
@@ -114,15 +114,15 @@ export default function ExportScreen() {
 
         {/* Stats */}
         <View style={[styles.statsRow]}>
-          <View style={[styles.statCard, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
+          <View style={[styles.statCard, { backgroundColor: "rgba(8,12,28,0.88)", borderColor: "rgba(255,215,0,0.22)" }]}>
             <Text style={[styles.statNum, { color: "#FFD700" }]}>{memoryCount}</Text>
-            <Text style={[styles.statLabel, { color: "rgba(255,255,255,0.4)" }]}>Memories</Text>
+            <Text style={[styles.statLabel, { color: "rgba(255,255,255,0.7)" }]}>Memories</Text>
           </View>
-          <View style={[styles.statCard, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
+          <View style={[styles.statCard, { backgroundColor: "rgba(8,12,28,0.88)", borderColor: "rgba(255,215,0,0.22)" }]}>
             <Text style={[styles.statNum, { color: "#FFD700" }]}>
               {format === "markdown" ? ".md" : ".json"}
             </Text>
-            <Text style={[styles.statLabel, { color: "rgba(255,255,255,0.4)" }]}>Format</Text>
+            <Text style={[styles.statLabel, { color: "rgba(255,255,255,0.7)" }]}>Format</Text>
           </View>
         </View>
 
@@ -150,7 +150,7 @@ export default function ExportScreen() {
                 <Text style={[styles.optionLabel, { color: format === opt.key ? "#FFD700" : "#FFFFFF" }]}>
                   {opt.label}
                 </Text>
-                <Text style={[styles.optionDesc, { color: "rgba(255,255,255,0.4)" }]}>{opt.desc}</Text>
+                <Text style={[styles.optionDesc, { color: "rgba(255,255,255,0.7)" }]}>{opt.desc}</Text>
               </Pressable>
             ))}
           </View>

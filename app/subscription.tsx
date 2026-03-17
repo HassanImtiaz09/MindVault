@@ -60,7 +60,7 @@ export default function SubscriptionScreen() {
         <View style={styles.hero}>
           <MaterialIcons name={"workspace-premium" as any} size={48} color="#FDCB6E" />
           <Text style={[styles.heroTitle, { color: "#FFFFFF" }]}>Choose Your Plan</Text>
-          <Text style={[styles.heroSubtitle, { color: "rgba(255,255,255,0.4)" }]}>
+          <Text style={[styles.heroSubtitle, { color: "rgba(255,255,255,0.7)" }]}>
             Unlock the full power of your AI-powered second brain
           </Text>
         </View>
@@ -77,7 +77,7 @@ export default function SubscriptionScreen() {
               style={[
                 styles.planCard,
                 {
-                  backgroundColor: "rgba(255,255,255,0.04)",
+                  backgroundColor: "rgba(8,12,28,0.88)",
                   borderColor: isActive ? "#FFD700" : "rgba(255,215,0,0.12)",
                   borderWidth: isActive ? 2 : 1,
                 },
@@ -97,7 +97,7 @@ export default function SubscriptionScreen() {
                     {plan.price}
                   </Text>
                   {isPro && (
-                    <Text style={[styles.planBilling, { color: "rgba(255,255,255,0.4)" }]}>
+                    <Text style={[styles.planBilling, { color: "rgba(255,255,255,0.7)" }]}>
                       or $99.99/year (save 17%)
                     </Text>
                   )}
@@ -175,13 +175,13 @@ export default function SubscriptionScreen() {
               ]}
             >
               <Text style={[styles.compFeature, { color: "#FFFFFF" }]}>{row.feature}</Text>
-              <Text style={[styles.compValue, { color: "rgba(255,255,255,0.4)" }]}>{row.basic}</Text>
+              <Text style={[styles.compValue, { color: "rgba(255,255,255,0.7)" }]}>{row.basic}</Text>
               <Text style={[styles.compValue, { color: "#FFD700", fontWeight: "600" }]}>{row.pro}</Text>
             </View>
           ))}
-          <View style={[styles.compRow, { backgroundColor: "rgba(255,255,255,0.04)" }]}>
-            <Text style={[styles.compFeature, { color: "rgba(255,255,255,0.4)", fontWeight: "700", fontSize: 12 }]}>Feature</Text>
-            <Text style={[styles.compValue, { color: "rgba(255,255,255,0.4)", fontWeight: "700", fontSize: 12 }]}>Basic</Text>
+          <View style={[styles.compRow, { backgroundColor: "rgba(8,12,28,0.88)" }]}>
+            <Text style={[styles.compFeature, { color: "rgba(255,255,255,0.7)", fontWeight: "700", fontSize: 12 }]}>Feature</Text>
+            <Text style={[styles.compValue, { color: "rgba(255,255,255,0.7)", fontWeight: "700", fontSize: 12 }]}>Basic</Text>
             <Text style={[styles.compValue, { color: "#FFD700", fontWeight: "700", fontSize: 12 }]}>Pro</Text>
           </View>
         </View>

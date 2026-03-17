@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl, StyleSheet, Platform } from "react-native";
-import { CinematicScreen, GoldenCard } from "@/components/screen-background";
+import { CinematicScreen, GoldenCard, useParallax } from "@/components/screen-background";
 import { GoldenText } from "@/components/golden-text";
 import { GoldenButton } from "@/components/golden-button";
 import { TooltipBubble } from "@/components/tooltip-bubble";
@@ -11,6 +11,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useAppState } from "@/lib/app-state";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTransition } from "@/lib/transition-context";
+import { startOAuthLogin } from "@/constants/oauth";
 
 const TYPE_META: Record<string, { icon: string; color: string; label: string }> = {
   text: { icon: "edit-note", color: "#FFD700", label: "Notes" },
@@ -36,6 +37,7 @@ export default function HomeScreen() {
     getPendingReminders, getLatestDigest,
   } = useAppState();
   const { triggerTransition } = useTransition();
+  const parallax = useParallax();
   const [refreshing, setRefreshing] = useState(false);
 
   const isLoggedIn = isAuthenticated || isGuest;
@@ -79,10 +81,7 @@ export default function HomeScreen() {
             Your AI-powered second brain.{"\n"}Capture, organize, and query your knowledge.
           </Text>
           <View style={{ width: "100%", paddingHorizontal: 24, gap: 12, marginTop: 16 }}>
-            <GoldenButton title="SIGN IN" onPress={() => {
-              const { startOAuthLogin } = require("@/lib/_core/auth");
-              startOAuthLogin();
-            }} icon="login" variant="primary" />
+            <GoldenButton title="SIGN IN" onPress={() => startOAuthLogin()} icon="login" variant="primary" />
             <GoldenButton title="EXPLORE AS GUEST" onPress={() => setGuest(true)} icon="explore" variant="outline" />
           </View>
         </View>
@@ -110,6 +109,8 @@ export default function HomeScreen() {
       <ScrollView
         contentContainerStyle={{ paddingBottom: 32 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFD700" />}
+        onScroll={parallax?.onScroll}
+        scrollEventThrottle={16}
       >
         {/* Header */}
         <View style={styles.topBar}>
@@ -144,7 +145,7 @@ export default function HomeScreen() {
         {/* Guest Banner */}
         {isGuest && (
           <Pressable
-            onPress={() => { const { startOAuthLogin } = require("@/lib/_core/auth"); startOAuthLogin(); }}
+            onPress={() => startOAuthLogin()}
             style={({ pressed }) => [styles.guestBanner, pressed && { opacity: 0.8 }]}
           >
             <MaterialIcons name="info-outline" size={18} color="#FFD700" />
@@ -467,36 +468,36 @@ const styles = StyleSheet.create({
   loginContainer: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, padding: 24 },
   loginIcon: {
     width: 100, height: 100, borderRadius: 50,
-    backgroundColor: "rgba(255,215,0,0.08)", borderWidth: 1.5, borderColor: "rgba(255,215,0,0.2)",
+    backgroundColor: "rgba(15,20,40,0.88)", borderWidth: 1.5, borderColor: "rgba(255,215,0,0.2)",
     alignItems: "center", justifyContent: "center", marginBottom: 8,
   },
-  loginSubtitle: { color: "rgba(255,255,255,0.5)", fontSize: 15, textAlign: "center", lineHeight: 22 },
+  loginSubtitle: { color: "rgba(255,255,255,0.75)", fontSize: 15, textAlign: "center", lineHeight: 22 },
   topBar: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
-  dateText: { fontSize: 12, fontWeight: "500", color: "rgba(255,255,255,0.4)" },
+  dateText: { fontSize: 12, fontWeight: "500", color: "rgba(255,255,255,0.7)" },
   greeting: { fontSize: 22, fontWeight: "700", color: "#FFFFFF", marginTop: 2 },
   topActions: { flexDirection: "row", gap: 8 },
   headerBtn: {
     width: 36, height: 36, borderRadius: 18,
-    backgroundColor: "rgba(255,215,0,0.08)", borderWidth: 1, borderColor: "rgba(255,215,0,0.15)",
+    backgroundColor: "rgba(15,20,40,0.88)", borderWidth: 1, borderColor: "rgba(255,215,0,0.25)",
     alignItems: "center", justifyContent: "center",
   },
   guestBanner: {
     flexDirection: "row", alignItems: "center", marginHorizontal: 20, marginTop: 8,
     padding: 12, borderRadius: 12, borderWidth: 1,
-    backgroundColor: "rgba(255,215,0,0.06)", borderColor: "rgba(255,215,0,0.15)", gap: 10,
+    backgroundColor: "rgba(15,20,40,0.90)", borderColor: "rgba(255,215,0,0.25)", gap: 10,
   },
-  guestText: { color: "rgba(255,255,255,0.6)", fontSize: 13, flex: 1 },
+  guestText: { color: "rgba(255,255,255,0.8)", fontSize: 13, flex: 1 },
   focusBanner: {
     flexDirection: "row", alignItems: "center", marginHorizontal: 20, marginTop: 8,
     padding: 12, borderRadius: 12, borderWidth: 1,
     backgroundColor: "rgba(129,199,132,0.08)", borderColor: "rgba(129,199,132,0.2)", gap: 10,
   },
   focusTitle: { color: "#FFFFFF", fontSize: 14, fontWeight: "600" },
-  focusSub: { color: "rgba(255,255,255,0.5)", fontSize: 12 },
+  focusSub: { color: "rgba(255,255,255,0.75)", fontSize: 12 },
   captureBar: {
     flexDirection: "row", alignItems: "center", marginHorizontal: 20, marginTop: 12,
     paddingHorizontal: 16, paddingVertical: 14, borderRadius: 14, borderWidth: 1,
-    backgroundColor: "rgba(255,215,0,0.06)", borderColor: "rgba(255,215,0,0.12)", gap: 10,
+    backgroundColor: "rgba(15,20,40,0.90)", borderColor: "rgba(255,215,0,0.22)", gap: 10,
   },
   captureBarText: { fontSize: 15, flex: 1, color: "rgba(255,255,255,0.35)" },
   section: { paddingHorizontal: 20, marginTop: 20 },
@@ -506,38 +507,38 @@ const styles = StyleSheet.create({
   digestHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
   digestIconBg: { width: 36, height: 36, borderRadius: 10, backgroundColor: "rgba(255,215,0,0.1)", alignItems: "center", justifyContent: "center" },
   digestTitle: { fontSize: 16, fontWeight: "700", color: "#FFD700" },
-  digestDate: { fontSize: 12, color: "rgba(255,255,255,0.4)" },
+  digestDate: { fontSize: 12, color: "rgba(255,255,255,0.7)" },
   digestFocus: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: "rgba(129,199,132,0.1)", marginTop: 8 },
   digestFocusText: { fontSize: 13, fontWeight: "600", color: "#81C784" },
   digestInsight: { fontSize: 14, lineHeight: 20, color: "rgba(255,255,255,0.7)", marginTop: 8 },
   digestMemory: { flexDirection: "row", alignItems: "center", gap: 8, padding: 10, borderRadius: 10, backgroundColor: "rgba(0,0,0,0.15)", marginTop: 8 },
   digestMemTitle: { fontSize: 13, fontWeight: "600", color: "#FFFFFF" },
-  digestMemSummary: { fontSize: 12, color: "rgba(255,255,255,0.4)", marginTop: 1 },
+  digestMemSummary: { fontSize: 12, color: "rgba(255,255,255,0.7)", marginTop: 1 },
   statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   statCard: { width: "47%" as any, flexGrow: 1, alignItems: "center", paddingVertical: 18, borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,215,0,0.1)" },
   statNumber: { fontSize: 28, fontWeight: "800" },
-  statLabel: { fontSize: 12, marginTop: 2, color: "rgba(255,255,255,0.4)" },
+  statLabel: { fontSize: 12, marginTop: 2, color: "rgba(255,255,255,0.7)" },
   typeRow: { flexDirection: "row", gap: 10, flexWrap: "wrap" },
   typeCard: { alignItems: "center", paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,215,0,0.08)", gap: 4, minWidth: 70 },
   typeCount: { fontSize: 18, fontWeight: "700" },
-  typeLabel: { fontSize: 11, color: "rgba(255,255,255,0.4)" },
+  typeLabel: { fontSize: 11, color: "rgba(255,255,255,0.7)" },
   topicChip: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1, borderColor: "rgba(255,215,0,0.2)", gap: 6 },
   topicText: { fontSize: 13, fontWeight: "600", color: "#FFD700" },
   tagDot: { width: 8, height: 8, borderRadius: 4 },
   memIcon: { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   memTitle: { fontSize: 15, fontWeight: "600", color: "#FFFFFF" },
-  memSummary: { fontSize: 13, marginTop: 2, lineHeight: 18, color: "rgba(255,255,255,0.5)" },
+  memSummary: { fontSize: 13, marginTop: 2, lineHeight: 18, color: "rgba(255,255,255,0.75)" },
   miniTag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: "rgba(255,215,0,0.1)" },
   miniTagText: { fontSize: 11, color: "#FFD700" },
   emptyTitle: { fontSize: 17, fontWeight: "600", color: "#FFFFFF" },
-  emptySub: { fontSize: 14, textAlign: "center", paddingHorizontal: 32, color: "rgba(255,255,255,0.4)" },
+  emptySub: { fontSize: 14, textAlign: "center", paddingHorizontal: 32, color: "rgba(255,255,255,0.7)" },
   actionsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   actionCard: { width: 105, alignItems: "center", paddingVertical: 18, borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,215,0,0.08)", gap: 6 },
   actionLabel: { fontSize: 12, fontWeight: "600", color: "rgba(255,255,255,0.7)" },
   upgradeBanner: { flexDirection: "row", alignItems: "center", marginHorizontal: 20, marginTop: 20, padding: 16, borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,215,0,0.2)", gap: 12 },
   upgradeTitle: { fontSize: 15, fontWeight: "700", color: "#FFD700" },
-  upgradeSub: { fontSize: 12, marginTop: 2, color: "rgba(255,255,255,0.4)" },
+  upgradeSub: { fontSize: 12, marginTop: 2, color: "rgba(255,255,255,0.7)" },
   reminderDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#FFA500" },
   reminderTitle: { fontSize: 14, fontWeight: "600", color: "#FFFFFF" },
-  reminderDate: { fontSize: 12, color: "rgba(255,255,255,0.4)" },
+  reminderDate: { fontSize: 12, color: "rgba(255,255,255,0.7)" },
 });

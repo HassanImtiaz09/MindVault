@@ -39,11 +39,11 @@ export default function TagsScreen() {
   const renderTag = useCallback(({ item }: { item: UserTag }) => {
     const memCount = getMemoriesByTag(item.id).length;
     return (
-      <View style={[styles.tagCard, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
+      <View style={[styles.tagCard, { backgroundColor: "rgba(8,12,28,0.88)", borderColor: "rgba(255,215,0,0.22)" }]}>
         <View style={[styles.tagDot, { backgroundColor: item.color }]} />
         <View style={{ flex: 1 }}>
           <Text style={[styles.tagName, { color: "#FFFFFF" }]}>{item.name}</Text>
-          <Text style={[styles.tagCount, { color: "rgba(255,255,255,0.4)" }]}>
+          <Text style={[styles.tagCount, { color: "rgba(255,255,255,0.7)" }]}>
             {memCount} {memCount === 1 ? "memory" : "memories"}
           </Text>
         </View>
@@ -74,14 +74,14 @@ export default function TagsScreen() {
 
       {/* Create Tag Form */}
       {showCreate && (
-        <View style={[styles.createForm, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
+        <View style={[styles.createForm, { backgroundColor: "rgba(8,12,28,0.88)", borderColor: "rgba(255,215,0,0.22)" }]}>
           <Text style={[styles.createTitle, { color: "#FFFFFF" }]}>Create New Tag</Text>
           <TextInput
             value={newTagName}
             onChangeText={setNewTagName}
             placeholder="Tag name..."
             placeholderTextColor={"rgba(255,255,255,0.4)"}
-            style={[styles.input, { color: "#FFFFFF", backgroundColor: "#0A0E1A", borderColor: "rgba(255,215,0,0.12)" }]}
+            style={[styles.input, { color: "#FFFFFF", backgroundColor: "#0A0E1A", borderColor: "rgba(255,215,0,0.22)" }]}
             returnKeyType="done"
             onSubmitEditing={handleCreate}
           />
@@ -102,9 +102,9 @@ export default function TagsScreen() {
           <View style={styles.createActions}>
             <Pressable
               onPress={() => setShowCreate(false)}
-              style={({ pressed }) => [styles.cancelBtn, { borderColor: "rgba(255,215,0,0.12)" }, pressed && { opacity: 0.7 }]}
+              style={({ pressed }) => [styles.cancelBtn, { borderColor: "rgba(255,215,0,0.22)" }, pressed && { opacity: 0.7 }]}
             >
-              <Text style={{ color: "rgba(255,255,255,0.4)", fontWeight: "600" }}>Cancel</Text>
+              <Text style={{ color: "rgba(255,255,255,0.7)", fontWeight: "600" }}>Cancel</Text>
             </Pressable>
             <Pressable
               onPress={handleCreate}
@@ -130,7 +130,7 @@ export default function TagsScreen() {
           <View style={styles.emptyState}>
             <MaterialIcons name={"label" as any} size={48} color={"rgba(255,255,255,0.4)"} />
             <Text style={[styles.emptyTitle, { color: "#FFFFFF" }]}>No tags yet</Text>
-            <Text style={[styles.emptySubtitle, { color: "rgba(255,255,255,0.4)" }]}>
+            <Text style={[styles.emptySubtitle, { color: "rgba(255,255,255,0.7)" }]}>
               Create custom tags to organize your memories beyond AI-generated topics.
             </Text>
             <Pressable

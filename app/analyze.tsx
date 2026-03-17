@@ -61,7 +61,7 @@ export default function AnalyzeScreen() {
         {/* Analysis Type Selection */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: "#FFFFFF" }]}>Choose Analysis Type</Text>
-          <Text style={[styles.sectionSubtitle, { color: "rgba(255,255,255,0.4)" }]}>
+          <Text style={[styles.sectionSubtitle, { color: "rgba(255,255,255,0.7)" }]}>
             Select how you want AI to analyze this document
           </Text>
           <View style={styles.typeGrid}>
@@ -84,7 +84,7 @@ export default function AnalyzeScreen() {
                   <MaterialIcons name={type.icon} size={22} color={type.color} />
                 </View>
                 <Text style={[styles.typeLabel, { color: "#FFFFFF" }]}>{type.label}</Text>
-                <Text style={[styles.typeDesc, { color: "rgba(255,255,255,0.4)" }]}>{type.description}</Text>
+                <Text style={[styles.typeDesc, { color: "rgba(255,255,255,0.7)" }]}>{type.description}</Text>
               </Pressable>
             ))}
           </View>
@@ -94,8 +94,8 @@ export default function AnalyzeScreen() {
         {loading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={"#FFD700"} />
-            <Text style={[styles.loadingText, { color: "rgba(255,255,255,0.4)" }]}>Analyzing document...</Text>
-            <Text style={[styles.loadingHint, { color: "rgba(255,255,255,0.4)" }]}>
+            <Text style={[styles.loadingText, { color: "rgba(255,255,255,0.7)" }]}>Analyzing document...</Text>
+            <Text style={[styles.loadingHint, { color: "rgba(255,255,255,0.7)" }]}>
               AI is reading and interpreting your document. This may take a moment.
             </Text>
           </View>
@@ -113,7 +113,7 @@ export default function AnalyzeScreen() {
                 <MaterialIcons name={"share" as any} size={18} color={"#FFD700"} />
               </Pressable>
             </View>
-            <View style={[styles.resultCard, { backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,215,0,0.12)" }]}>
+            <View style={[styles.resultCard, { backgroundColor: "rgba(8,12,28,0.88)", borderColor: "rgba(255,215,0,0.22)" }]}>
               <Text style={[styles.resultText, { color: "#FFFFFF" }]}>{analysis}</Text>
             </View>
           </View>

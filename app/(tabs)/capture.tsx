@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { ScrollView, Text, View, TextInput, Pressable, ActivityIndicator, Alert, Platform, StyleSheet } from "react-native";
-import { CinematicScreen, GoldenCard } from "@/components/screen-background";
+import { CinematicScreen, GoldenCard, useParallax } from "@/components/screen-background";
 import { GoldenText } from "@/components/golden-text";
 import { GoldenButton } from "@/components/golden-button";
 import { TooltipBubble } from "@/components/tooltip-bubble";
@@ -29,6 +29,7 @@ export default function CaptureScreen() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { isGuest, canUseFeature, subscription } = useAppState();
+  const parallax = useParallax();
   const [mode, setMode] = useState<CaptureMode>("text");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -159,7 +160,7 @@ export default function CaptureScreen() {
 
   return (
     <CinematicScreen screenName="capture">
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }} keyboardShouldPersistTaps="handled" onScroll={parallax?.onScroll} scrollEventThrottle={16}>
         {/* Header */}
         <View style={styles.header}>
           <GoldenText variant="title" style={{ textAlign: "left" }}>Capture</GoldenText>
@@ -324,27 +325,27 @@ export default function CaptureScreen() {
 
 const styles = StyleSheet.create({
   centerFull: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, padding: 24 },
-  loginText: { fontSize: 16, color: "rgba(255,255,255,0.4)", textAlign: "center" },
+  loginText: { fontSize: 16, color: "rgba(255,255,255,0.7)", textAlign: "center" },
   successGlow: { marginBottom: 8 },
-  successSub: { fontSize: 15, color: "rgba(255,255,255,0.5)", textAlign: "center" },
+  successSub: { fontSize: 15, color: "rgba(255,255,255,0.75)", textAlign: "center" },
   header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
-  headerSub: { fontSize: 14, color: "rgba(255,255,255,0.4)", marginTop: 4 },
+  headerSub: { fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 4 },
   modeRow: { flexDirection: "row", gap: 8, paddingHorizontal: 20 },
   modeChip: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 10, borderRadius: 24, borderWidth: 1, gap: 6 },
   modeLabel: { fontSize: 13, fontWeight: "600" },
   inputSection: { paddingHorizontal: 20, marginTop: 16 },
-  inputLabel: { fontSize: 14, fontWeight: "600", color: "rgba(255,255,255,0.6)", marginBottom: 8, letterSpacing: 0.5 },
-  textInput: { fontSize: 16, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,215,0,0.12)", backgroundColor: "rgba(255,255,255,0.04)", color: "#FFFFFF" },
-  textArea: { fontSize: 16, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,215,0,0.12)", backgroundColor: "rgba(255,255,255,0.04)", color: "#FFFFFF", minHeight: 160 },
-  textAreaSmall: { fontSize: 16, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,215,0,0.12)", backgroundColor: "rgba(255,255,255,0.04)", color: "#FFFFFF", minHeight: 80 },
+  inputLabel: { fontSize: 14, fontWeight: "600", color: "rgba(255,255,255,0.8)", marginBottom: 8, letterSpacing: 0.5 },
+  textInput: { fontSize: 16, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,215,0,0.22)", backgroundColor: "rgba(8,12,28,0.88)", color: "#FFFFFF" },
+  textArea: { fontSize: 16, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,215,0,0.22)", backgroundColor: "rgba(8,12,28,0.88)", color: "#FFFFFF", minHeight: 160 },
+  textAreaSmall: { fontSize: 16, paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,215,0,0.22)", backgroundColor: "rgba(8,12,28,0.88)", color: "#FFFFFF", minHeight: 80 },
   centeredContent: { alignItems: "center", gap: 8, paddingVertical: 8 },
   voiceTitle: { fontSize: 16, fontWeight: "600", color: "#FFFFFF" },
-  voiceHint: { fontSize: 14, textAlign: "center", color: "rgba(255,255,255,0.4)" },
+  voiceHint: { fontSize: 14, textAlign: "center", color: "rgba(255,255,255,0.7)" },
   recordBtn: { borderRadius: 24, overflow: "hidden", marginTop: 8 },
   recordBtnGrad: { flexDirection: "row", alignItems: "center", paddingHorizontal: 24, paddingVertical: 12, gap: 8 },
-  filePicker: { padding: 32, borderRadius: 16, borderWidth: 1, borderStyle: "dashed", borderColor: "rgba(255,215,0,0.15)", backgroundColor: "rgba(255,255,255,0.03)", alignItems: "center" },
+  filePicker: { padding: 32, borderRadius: 16, borderWidth: 1, borderStyle: "dashed", borderColor: "rgba(255,215,0,0.25)", backgroundColor: "rgba(8,12,28,0.88)", alignItems: "center" },
   fileName: { fontWeight: "600", color: "#FFFFFF" },
   fileHint: { fontSize: 13, textAlign: "center", color: "rgba(255,255,255,0.35)" },
-  aiHint: { flexDirection: "row", alignItems: "flex-start", padding: 12, borderRadius: 10, borderWidth: 1, borderColor: "rgba(255,215,0,0.12)", backgroundColor: "rgba(255,215,0,0.04)", gap: 8, marginTop: 12 },
-  aiHintText: { fontSize: 12, lineHeight: 18, flex: 1, color: "rgba(255,255,255,0.5)" },
+  aiHint: { flexDirection: "row", alignItems: "flex-start", padding: 12, borderRadius: 10, borderWidth: 1, borderColor: "rgba(255,215,0,0.22)", backgroundColor: "rgba(15,20,40,0.88)", gap: 8, marginTop: 12 },
+  aiHintText: { fontSize: 12, lineHeight: 18, flex: 1, color: "rgba(255,255,255,0.75)" },
 });
