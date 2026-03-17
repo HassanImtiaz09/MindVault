@@ -106,3 +106,13 @@
 - [x] Update tab bar to transparent dark with golden accents
 - [x] Wire guest mode exit with welcome tour option
 - [x] Test all transitions, tooltips, and backgrounds (95 tests passing)
+
+## Phase 6 - Tab-Specific NanoBanana Backgrounds
+- [x] Generate Home tab background (dashboard/brain hub concept)
+- [x] Generate Capture tab background (input/creation concept)
+- [x] Generate Library tab background (archive/knowledge vault concept)
+- [x] Generate Ask AI tab background (conversation/neural query concept)
+- [x] Generate Insights tab background (analytics/graph visualization concept)
+- [x] Optimize and upload all 5 images to S3
+- [x] Update constants/images.ts with new tab-specific URLs
+- [x] Apply new backgrounds to each tab screen
