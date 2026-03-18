@@ -9,10 +9,12 @@ import { useAuth } from "@/hooks/use-auth";
 import { trpc } from "@/lib/trpc";
 import { KnowledgeGraphView } from "@/components/knowledge-graph";
 import { useAppState } from "@/lib/app-state";
+import { useRouter } from "expo-router";
 
 type InsightTab = "summary" | "graph";
 
 export default function InsightsScreen() {
+  const router = useRouter();
   const { isAuthenticated } = useAuth();
   const { isGuest } = useAppState();
   const [tab, setTab] = useState<InsightTab>("summary");
@@ -49,6 +51,12 @@ export default function InsightsScreen() {
     <CinematicScreen screenName="insights">
       <View style={styles.header}>
         <GoldenText variant="title" style={{ textAlign: "left" }}>Insights</GoldenText>
+        <Pressable
+          onPress={() => router.push("/share-insight" as any)}
+          style={({ pressed }) => [styles.shareBtn, pressed && { opacity: 0.7 }]}
+        >
+          <MaterialIcons name="share" size={18} color="#FFD700" />
+        </Pressable>
       </View>
 
       <TooltipBubble tipId="insights_summary" text="Get AI-generated weekly summaries, discover recurring themes, and visualize your knowledge graph." position="bottom" arrowSide="center" />
@@ -216,7 +224,8 @@ export default function InsightsScreen() {
 const styles = StyleSheet.create({
   centerFull: { flex: 1, alignItems: "center", justifyContent: "center", gap: 16, padding: 24 },
   loginText: { fontSize: 16, color: "rgba(255,255,255,0.7)", textAlign: "center" },
-  header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 },
+  shareBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(15,20,40,0.88)", borderWidth: 1, borderColor: "rgba(255,215,0,0.25)", alignItems: "center", justifyContent: "center" },
   tabRow: { flexDirection: "row", paddingHorizontal: 20, borderBottomWidth: 1, borderBottomColor: "rgba(255,215,0,0.08)" },
   tabBtn: { flexDirection: "row", alignItems: "center", paddingVertical: 12, paddingHorizontal: 16, gap: 6, borderBottomWidth: 2 },
   loadingCenter: { alignItems: "center", justifyContent: "center", paddingTop: 80 },

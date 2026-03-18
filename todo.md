@@ -121,3 +121,37 @@
 - [x] Fix login error in app preview
 - [x] Add parallax scrolling effect to CinematicScreen backgrounds
 - [x] Increase text box and card contrast for better readability (95 tests passing)
+
+## Phase 8 - Strategic Features from Viral Analysis
+
+### Prompt 1 - OCR + Semantic Search
+- [x] Visual indicator when search results come from image OCR
+- [x] Semantic search badge/label in search results showing meaning-based matches
+
+### Prompt 2 - AI Vault Chat + Summaries (ALREADY BUILT)
+- [x] AI chat interface querying saved content (Ask AI tab)
+- [x] Auto-summary on document save (processMemory)
+- [x] Pro-only paywall for AI features
+
+### Prompt 3 - Daily Digest + "On This Day"
+- [x] Daily Digest widget with resurfaced items (DailyDigest component)
+- [x] "On This Day" section showing saves from same date in previous months
+- [x] AI-generated "theme of the week" in Daily Digest
+- [x] Pro-only gate for Daily Digest
+
+### Prompt 4 - 3-Tier Subscription (Free/Pro/Teams)
+- [x] Free tier (50 saves/month, basic search, limited AI)
+- [x] Pro tier (unlimited saves, semantic search, AI chat, OCR, daily digest)
+- [x] Teams tier ($24.99/user/month, shared vaults, admin controls, API access, SSO)
+- [x] Upgrade prompt with clear value message when free users hit limits
+- [x] Track which features triggered upgrade prompt (analytics dashboard)
+
+### Prompt 5 - Viral Sharing Mechanics
+- [x] Export AI insights/summaries as shareable branded insight cards (5 themes)
+- [x] One-tap share via system share sheet (Twitter/X, LinkedIn, etc.)
+- [x] "Shared via MindVault" branding toggle on shared cards
+- [x] Referral system with code generation and email invites
+- [x] Referral dashboard showing count, status, and rewards earned
+- [x] Upgrade analytics dashboard with conversion tracking
+- [x] Teams management screen with member/vault CRUD
+- [x] 40 new unit tests for all 7 features (all passing)

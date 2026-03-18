@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Subscription tiers
-export type SubscriptionTier = "basic" | "pro";
+export type SubscriptionTier = "basic" | "pro" | "teams";
 
 export interface SubscriptionPlan {
   tier: SubscriptionTier;
@@ -58,6 +58,26 @@ export const PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
       "Idea generation",
     ],
   },
+  teams: {
+    tier: "teams",
+    name: "Teams",
+    price: "$15/user/mo",
+    priceMonthly: 15,
+    memoryLimit: -1,
+    folderLimit: -1,
+    features: [
+      "Everything in Pro",
+      "Shared team vaults",
+      "Admin controls & user management",
+      "API access for integrations",
+      "SSO (Single Sign-On) support",
+      "Team analytics dashboard",
+      "Priority support",
+      "Custom branding",
+      "Bulk import/export",
+      "Advanced audit logs",
+    ],
+  },
 };
 
 // Tag type
@@ -111,6 +131,45 @@ export interface DailyDigest {
   focusTopic: string;
   memoriesCount: number;
   generated: boolean;
+  themeOfTheWeek?: string;
+  onThisDay?: { id: number; title: string; summary: string; date: string }[];
+}
+
+// Referral system
+export interface Referral {
+  id: string;
+  code: string;
+  referredEmail: string;
+  status: "pending" | "converted" | "expired";
+  createdAt: string;
+  convertedAt?: string;
+}
+
+// Upgrade prompt analytics
+export interface UpgradePromptEvent {
+  id: string;
+  feature: string;
+  screen: string;
+  timestamp: string;
+  converted: boolean;
+}
+
+// Teams admin
+export interface TeamMember {
+  id: string;
+  email: string;
+  name: string;
+  role: "admin" | "member";
+  joinedAt: string;
+  status: "active" | "invited" | "deactivated";
+}
+
+export interface TeamVault {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  memberIds: string[];
 }
 
 interface AppState {
@@ -135,6 +194,18 @@ interface AppState {
   dailyDigests: DailyDigest[];
   dailyDigestEnabled: boolean;
   dailyDigestTime: string;
+  // Referral system
+  referralCode: string;
+  referrals: Referral[];
+  referralRewardsEarned: number;
+  // Upgrade prompt analytics
+  upgradePromptEvents: UpgradePromptEvent[];
+  // Teams
+  teamMembers: TeamMember[];
+  teamVaults: TeamVault[];
+  teamName: string;
+  ssoEnabled: boolean;
+  apiAccessEnabled: boolean;
 }
 
 interface AppStateContextType extends AppState {
@@ -177,6 +248,26 @@ interface AppStateContextType extends AppState {
   setDailyDigestTime: (time: string) => void;
   addDailyDigest: (digest: Omit<DailyDigest, "id">) => void;
   getLatestDigest: () => DailyDigest | null;
+  // Referral system
+  generateReferralCode: () => string;
+  addReferral: (email: string) => void;
+  convertReferral: (referralId: string) => void;
+  getReferralStats: () => { total: number; converted: number; pending: number; rewardsEarned: number };
+  // Upgrade prompt analytics
+  trackUpgradePrompt: (feature: string, screen: string) => void;
+  trackUpgradeConversion: (eventId: string) => void;
+  getUpgradeAnalytics: () => { totalPrompts: number; conversions: number; conversionRate: number; topFeatures: { feature: string; count: number }[] };
+  // Teams
+  addTeamMember: (email: string, name: string, role: "admin" | "member") => void;
+  removeTeamMember: (memberId: string) => void;
+  updateTeamMemberRole: (memberId: string, role: "admin" | "member") => void;
+  createTeamVault: (name: string, description: string) => void;
+  deleteTeamVault: (vaultId: string) => void;
+  addMemberToVault: (vaultId: string, memberId: string) => void;
+  removeMemberFromVault: (vaultId: string, memberId: string) => void;
+  setTeamName: (name: string) => void;
+  setSsoEnabled: (v: boolean) => void;
+  setApiAccessEnabled: (v: boolean) => void;
 }
 
 const defaultState: AppState = {
@@ -196,6 +287,15 @@ const defaultState: AppState = {
   dailyDigests: [],
   dailyDigestEnabled: false,
   dailyDigestTime: "08:00",
+  referralCode: "",
+  referrals: [],
+  referralRewardsEarned: 0,
+  upgradePromptEvents: [],
+  teamMembers: [],
+  teamVaults: [],
+  teamName: "",
+  ssoEnabled: false,
+  apiAccessEnabled: false,
 };
 
 const AppStateContext = createContext<AppStateContextType>({
@@ -234,6 +334,23 @@ const AppStateContext = createContext<AppStateContextType>({
   setDailyDigestTime: () => {},
   addDailyDigest: () => {},
   getLatestDigest: () => null,
+  generateReferralCode: () => "",
+  addReferral: () => {},
+  convertReferral: () => {},
+  getReferralStats: () => ({ total: 0, converted: 0, pending: 0, rewardsEarned: 0 }),
+  trackUpgradePrompt: () => {},
+  trackUpgradeConversion: () => {},
+  getUpgradeAnalytics: () => ({ totalPrompts: 0, conversions: 0, conversionRate: 0, topFeatures: [] }),
+  addTeamMember: () => {},
+  removeTeamMember: () => {},
+  updateTeamMemberRole: () => {},
+  createTeamVault: () => {},
+  deleteTeamVault: () => {},
+  addMemberToVault: () => {},
+  removeMemberFromVault: () => {},
+  setTeamName: () => {},
+  setSsoEnabled: () => {},
+  setApiAccessEnabled: () => {},
 });
 
 const STORAGE_KEY = "@mindvault_app_state";
@@ -295,10 +412,12 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const setCaptureReminderTime = useCallback((time: string) => update({ captureReminderTime: time }), [update]);
 
   const proFeatures = ["document_analysis", "voice_capture", "image_capture", "export_pdf", "report_generation", "market_research", "idea_generation", "knowledge_graph", "push_notifications", "unlimited_memories", "unlimited_folders", "advanced_ai", "focus_mode", "custom_tags", "data_export", "smart_reminders", "collaborative_folders", "daily_digest"];
+  const teamsFeatures = ["shared_vaults", "admin_controls", "api_access", "sso", "team_analytics", "custom_branding", "bulk_import_export", "audit_logs"];
 
   const canUseFeature = useCallback((feature: string) => {
-    if (stateRef.current.subscription === "pro") return true;
-    return !proFeatures.includes(feature);
+    if (stateRef.current.subscription === "teams") return true;
+    if (stateRef.current.subscription === "pro") return !teamsFeatures.includes(feature);
+    return !proFeatures.includes(feature) && !teamsFeatures.includes(feature);
   }, []);
 
   const getMemoryLimit = useCallback(() => PLANS[stateRef.current.subscription].memoryLimit, []);
@@ -490,6 +609,194 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     return stateRef.current.dailyDigests[0] || null;
   }, []);
 
+  // Referral system
+  const generateReferralCode = useCallback((): string => {
+    if (stateRef.current.referralCode) return stateRef.current.referralCode;
+    const code = "MV-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+    update({ referralCode: code });
+    return code;
+  }, [update]);
+
+  const addReferral = useCallback((email: string) => {
+    const referral: Referral = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      code: stateRef.current.referralCode,
+      referredEmail: email,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    };
+    setState((prev) => {
+      const next = { ...prev, referrals: [...prev.referrals, referral] };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const convertReferral = useCallback((referralId: string) => {
+    setState((prev) => {
+      const next = {
+        ...prev,
+        referrals: prev.referrals.map((r) =>
+          r.id === referralId ? { ...r, status: "converted" as const, convertedAt: new Date().toISOString() } : r
+        ),
+        referralRewardsEarned: prev.referralRewardsEarned + 1,
+      };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const getReferralStats = useCallback(() => {
+    const referrals = stateRef.current.referrals;
+    return {
+      total: referrals.length,
+      converted: referrals.filter((r) => r.status === "converted").length,
+      pending: referrals.filter((r) => r.status === "pending").length,
+      rewardsEarned: stateRef.current.referralRewardsEarned,
+    };
+  }, []);
+
+  // Upgrade prompt analytics
+  const trackUpgradePrompt = useCallback((feature: string, screen: string) => {
+    const event: UpgradePromptEvent = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      feature,
+      screen,
+      timestamp: new Date().toISOString(),
+      converted: false,
+    };
+    setState((prev) => {
+      const next = { ...prev, upgradePromptEvents: [...prev.upgradePromptEvents, event].slice(-200) };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const trackUpgradeConversion = useCallback((eventId: string) => {
+    setState((prev) => {
+      const next = {
+        ...prev,
+        upgradePromptEvents: prev.upgradePromptEvents.map((e) =>
+          e.id === eventId ? { ...e, converted: true } : e
+        ),
+      };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const getUpgradeAnalytics = useCallback(() => {
+    const events = stateRef.current.upgradePromptEvents;
+    const totalPrompts = events.length;
+    const conversions = events.filter((e) => e.converted).length;
+    const featureMap: Record<string, number> = {};
+    for (const e of events) {
+      featureMap[e.feature] = (featureMap[e.feature] || 0) + 1;
+    }
+    const topFeatures = Object.entries(featureMap)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([feature, count]) => ({ feature, count }));
+    return {
+      totalPrompts,
+      conversions,
+      conversionRate: totalPrompts > 0 ? (conversions / totalPrompts) * 100 : 0,
+      topFeatures,
+    };
+  }, []);
+
+  // Teams management
+  const addTeamMember = useCallback((email: string, name: string, role: "admin" | "member") => {
+    const member: TeamMember = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      email,
+      name,
+      role,
+      joinedAt: new Date().toISOString(),
+      status: "invited",
+    };
+    setState((prev) => {
+      const next = { ...prev, teamMembers: [...prev.teamMembers, member] };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const removeTeamMember = useCallback((memberId: string) => {
+    setState((prev) => {
+      const next = {
+        ...prev,
+        teamMembers: prev.teamMembers.filter((m) => m.id !== memberId),
+        teamVaults: prev.teamVaults.map((v) => ({ ...v, memberIds: v.memberIds.filter((id) => id !== memberId) })),
+      };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const updateTeamMemberRole = useCallback((memberId: string, role: "admin" | "member") => {
+    setState((prev) => {
+      const next = { ...prev, teamMembers: prev.teamMembers.map((m) => m.id === memberId ? { ...m, role } : m) };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const createTeamVault = useCallback((name: string, description: string) => {
+    const vault: TeamVault = {
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name,
+      description,
+      createdAt: new Date().toISOString(),
+      memberIds: [],
+    };
+    setState((prev) => {
+      const next = { ...prev, teamVaults: [...prev.teamVaults, vault] };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const deleteTeamVault = useCallback((vaultId: string) => {
+    setState((prev) => {
+      const next = { ...prev, teamVaults: prev.teamVaults.filter((v) => v.id !== vaultId) };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const addMemberToVault = useCallback((vaultId: string, memberId: string) => {
+    setState((prev) => {
+      const next = {
+        ...prev,
+        teamVaults: prev.teamVaults.map((v) =>
+          v.id === vaultId && !v.memberIds.includes(memberId)
+            ? { ...v, memberIds: [...v.memberIds, memberId] }
+            : v
+        ),
+      };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const removeMemberFromVault = useCallback((vaultId: string, memberId: string) => {
+    setState((prev) => {
+      const next = {
+        ...prev,
+        teamVaults: prev.teamVaults.map((v) =>
+          v.id === vaultId ? { ...v, memberIds: v.memberIds.filter((id) => id !== memberId) } : v
+        ),
+      };
+      persist(next);
+      return next;
+    });
+  }, [persist]);
+
+  const setTeamName = useCallback((name: string) => update({ teamName: name }), [update]);
+  const setSsoEnabled = useCallback((v: boolean) => update({ ssoEnabled: v }), [update]);
+  const setApiAccessEnabled = useCallback((v: boolean) => update({ apiAccessEnabled: v }), [update]);
+
   return (
     <AppStateContext.Provider
       value={{
@@ -528,6 +835,23 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
         setDailyDigestTime,
         addDailyDigest,
         getLatestDigest,
+        generateReferralCode,
+        addReferral,
+        convertReferral,
+        getReferralStats,
+        trackUpgradePrompt,
+        trackUpgradeConversion,
+        getUpgradeAnalytics,
+        addTeamMember,
+        removeTeamMember,
+        updateTeamMemberRole,
+        createTeamVault,
+        deleteTeamVault,
+        addMemberToVault,
+        removeMemberFromVault,
+        setTeamName,
+        setSsoEnabled,
+        setApiAccessEnabled,
       }}
     >
       {children}

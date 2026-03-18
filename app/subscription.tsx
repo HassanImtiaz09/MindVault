@@ -9,36 +9,42 @@ export default function SubscriptionScreen() {
   const router = useRouter();
   const { subscription, setSubscription } = useAppState();
 
+  const tierOrder: SubscriptionTier[] = ["basic", "pro", "teams"];
+  const tierIndex = (t: SubscriptionTier) => tierOrder.indexOf(t);
+
   const handleSelectPlan = (tier: SubscriptionTier) => {
-    if (tier === "pro" && subscription !== "pro") {
+    if (tier === subscription) return;
+    const isUpgrade = tierIndex(tier) > tierIndex(subscription);
+    const planName = PLANS[tier].name;
+    const price = PLANS[tier].price;
+
+    if (isUpgrade) {
       Alert.alert(
-        "Upgrade to Pro",
-        "This would initiate a payment flow in a production app. For demo purposes, your plan will be upgraded immediately.",
+        `Upgrade to ${planName}`,
+        `This would initiate a payment flow (${price}) in a production app. For demo purposes, your plan will be upgraded immediately.`,
         [
           { text: "Cancel", style: "cancel" },
           {
             text: "Upgrade",
             onPress: () => {
-              setSubscription("pro");
-              Alert.alert("Welcome to Pro!", "You now have access to all premium features.", [
+              setSubscription(tier);
+              Alert.alert(`Welcome to ${planName}!`, `You now have access to all ${planName} features.`, [
                 { text: "OK", onPress: () => router.back() },
               ]);
             },
           },
         ]
       );
-    } else if (tier === "basic" && subscription === "pro") {
+    } else {
       Alert.alert(
-        "Downgrade to Basic",
-        "You will lose access to premium features. Your data will be preserved.",
+        `Downgrade to ${planName}`,
+        "You will lose access to higher-tier features. Your data will be preserved.",
         [
           { text: "Cancel", style: "cancel" },
           {
             text: "Downgrade",
             style: "destructive",
-            onPress: () => {
-              setSubscription("basic");
-            },
+            onPress: () => setSubscription(tier),
           },
         ]
       );
@@ -66,10 +72,13 @@ export default function SubscriptionScreen() {
         </View>
 
         {/* Plans */}
-        {(["basic", "pro"] as SubscriptionTier[]).map((tier) => {
+        {(["basic", "pro", "teams"] as SubscriptionTier[]).map((tier) => {
           const plan = PLANS[tier];
           const isActive = subscription === tier;
           const isPro = tier === "pro";
+          const isTeams = tier === "teams";
+          const isUpgrade = tierIndex(tier) > tierIndex(subscription);
+          const accentColor = isTeams ? "#4FC3F7" : isPro ? "#FFD700" : "#81C784";
 
           return (
             <View
@@ -89,16 +98,27 @@ export default function SubscriptionScreen() {
                   <Text style={styles.popularText}>Most Popular</Text>
                 </View>
               )}
+              {isTeams && (
+                <View style={[styles.popularBadge, { backgroundColor: "#4FC3F7" }]}>
+                  <MaterialIcons name={"groups" as any} size={12} color="#fff" />
+                  <Text style={styles.popularText}>For Teams</Text>
+                </View>
+              )}
 
               <View style={styles.planHeader}>
                 <View>
                   <Text style={[styles.planName, { color: "#FFFFFF" }]}>{plan.name}</Text>
-                  <Text style={[styles.planPrice, { color: isPro ? "#FFD700" : "#FFFFFF" }]}>
+                  <Text style={[styles.planPrice, { color: accentColor }]}>
                     {plan.price}
                   </Text>
                   {isPro && (
                     <Text style={[styles.planBilling, { color: "rgba(255,255,255,0.7)" }]}>
                       or $99.99/year (save 17%)
+                    </Text>
+                  )}
+                  {isTeams && (
+                    <Text style={[styles.planBilling, { color: "rgba(255,255,255,0.7)" }]}>
+                      per user, billed monthly
                     </Text>
                   )}
                 </View>
@@ -117,7 +137,7 @@ export default function SubscriptionScreen() {
                   <MaterialIcons
                     name={"check-circle" as any}
                     size={18}
-                    color={isPro ? "#FFD700" : "#81C784"}
+                    color={accentColor}
                   />
                   <Text style={[styles.featureText, { color: "#FFFFFF" }]}>{feature}</Text>
                 </View>
@@ -129,9 +149,9 @@ export default function SubscriptionScreen() {
                   style={({ pressed }) => [
                     styles.selectBtn,
                     {
-                      backgroundColor: isPro ? "#FFD700" : "transparent",
-                      borderColor: isPro ? "#FFD700" : "rgba(255,215,0,0.12)",
-                      borderWidth: isPro ? 0 : 1.5,
+                      backgroundColor: isUpgrade ? accentColor : "transparent",
+                      borderColor: isUpgrade ? accentColor : "rgba(255,215,0,0.12)",
+                      borderWidth: isUpgrade ? 0 : 1.5,
                     },
                     pressed && { opacity: 0.8, transform: [{ scale: 0.97 }] },
                   ]}
@@ -139,10 +159,10 @@ export default function SubscriptionScreen() {
                   <Text
                     style={[
                       styles.selectBtnText,
-                      { color: isPro ? "#fff" : "#FFFFFF" },
+                      { color: isUpgrade ? "#fff" : "#FFFFFF" },
                     ]}
                   >
-                    {isPro ? "Upgrade to Pro" : "Downgrade to Basic"}
+                    {isUpgrade ? `Upgrade to ${plan.name}` : `Downgrade to ${plan.name}`}
                   </Text>
                 </Pressable>
               )}
@@ -153,19 +173,25 @@ export default function SubscriptionScreen() {
         {/* Comparison Table */}
         <View style={styles.comparisonSection}>
           <Text style={[styles.compTitle, { color: "#FFFFFF" }]}>Plan Comparison</Text>
+          <View style={[styles.compRow, { backgroundColor: "rgba(8,12,28,0.88)" }]}>
+            <Text style={[styles.compFeature, { color: "rgba(255,255,255,0.7)", fontWeight: "700", fontSize: 12 }]}>Feature</Text>
+            <Text style={[styles.compValue, { color: "rgba(255,255,255,0.7)", fontWeight: "700", fontSize: 12 }]}>Basic</Text>
+            <Text style={[styles.compValue, { color: "#FFD700", fontWeight: "700", fontSize: 12 }]}>Pro</Text>
+            <Text style={[styles.compValue, { color: "#4FC3F7", fontWeight: "700", fontSize: 12 }]}>Teams</Text>
+          </View>
           {[
-            { feature: "Memories", basic: "50", pro: "Unlimited" },
-            { feature: "Folders", basic: "3", pro: "Unlimited" },
-            { feature: "Text & Link Capture", basic: "Yes", pro: "Yes" },
-            { feature: "Image & Voice Capture", basic: "Limited", pro: "Unlimited" },
-            { feature: "PDF & DOCX Analysis", basic: "No", pro: "Yes" },
-            { feature: "Contract/Medical Analysis", basic: "No", pro: "Yes" },
-            { feature: "Report Generation", basic: "No", pro: "Yes" },
-            { feature: "Export as PDF", basic: "No", pro: "Yes" },
-            { feature: "Knowledge Graph", basic: "View Only", pro: "Full Access" },
-            { feature: "Idea Generation", basic: "No", pro: "Yes" },
-            { feature: "Push Notifications", basic: "No", pro: "Yes" },
-            { feature: "Weekly AI Summary", basic: "Basic", pro: "Detailed" },
+            { feature: "Memories", basic: "50", pro: "Unlimited", teams: "Unlimited" },
+            { feature: "Folders", basic: "3", pro: "Unlimited", teams: "Unlimited" },
+            { feature: "Text & Link Capture", basic: "Yes", pro: "Yes", teams: "Yes" },
+            { feature: "Image & Voice Capture", basic: "Limited", pro: "Unlimited", teams: "Unlimited" },
+            { feature: "PDF & DOCX Analysis", basic: "No", pro: "Yes", teams: "Yes" },
+            { feature: "Report Generation", basic: "No", pro: "Yes", teams: "Yes" },
+            { feature: "Knowledge Graph", basic: "View Only", pro: "Full Access", teams: "Full Access" },
+            { feature: "Shared Vaults", basic: "No", pro: "No", teams: "Yes" },
+            { feature: "Admin Controls", basic: "No", pro: "No", teams: "Yes" },
+            { feature: "API Access", basic: "No", pro: "No", teams: "Yes" },
+            { feature: "SSO Support", basic: "No", pro: "No", teams: "Yes" },
+            { feature: "Audit Logs", basic: "No", pro: "No", teams: "Yes" },
           ].map((row, i) => (
             <View
               key={i}
@@ -177,13 +203,9 @@ export default function SubscriptionScreen() {
               <Text style={[styles.compFeature, { color: "#FFFFFF" }]}>{row.feature}</Text>
               <Text style={[styles.compValue, { color: "rgba(255,255,255,0.7)" }]}>{row.basic}</Text>
               <Text style={[styles.compValue, { color: "#FFD700", fontWeight: "600" }]}>{row.pro}</Text>
+              <Text style={[styles.compValue, { color: "#4FC3F7", fontWeight: "600" }]}>{row.teams}</Text>
             </View>
           ))}
-          <View style={[styles.compRow, { backgroundColor: "rgba(8,12,28,0.88)" }]}>
-            <Text style={[styles.compFeature, { color: "rgba(255,255,255,0.7)", fontWeight: "700", fontSize: 12 }]}>Feature</Text>
-            <Text style={[styles.compValue, { color: "rgba(255,255,255,0.7)", fontWeight: "700", fontSize: 12 }]}>Basic</Text>
-            <Text style={[styles.compValue, { color: "#FFD700", fontWeight: "700", fontSize: 12 }]}>Pro</Text>
-          </View>
         </View>
       </ScrollView>
     </CinematicScreen>

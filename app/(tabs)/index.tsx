@@ -34,7 +34,7 @@ export default function HomeScreen() {
   const {
     isGuest, hasCompletedOnboarding, subscription, favorites,
     loaded: appStateLoaded, setGuest, tags, activeFocusSession,
-    getPendingReminders, getLatestDigest,
+    getPendingReminders, getLatestDigest, trackUpgradePrompt,
   } = useAppState();
   const { triggerTransition } = useTransition();
   const parallax = useParallax();
@@ -102,6 +102,8 @@ export default function HomeScreen() {
     focusTopic: "Getting Started",
     memoriesCount: 0,
     topMemory: null,
+    themeOfTheWeek: undefined as string | undefined,
+    onThisDay: undefined as { id: number; title: string; summary: string; date: string }[] | undefined,
   };
 
   return (
@@ -202,6 +204,16 @@ export default function HomeScreen() {
               <Text style={styles.digestFocusText}>Focus: {displayDigest.focusTopic}</Text>
             </View>
             <Text style={styles.digestInsight} numberOfLines={3}>{displayDigest.insight}</Text>
+            {/* Theme of the Week */}
+            {displayDigest.themeOfTheWeek && (
+              <View style={styles.themeWeekRow}>
+                <MaterialIcons name="auto-awesome" size={14} color="#BB86FC" />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.themeWeekLabel}>Theme of the Week</Text>
+                  <Text style={styles.themeWeekText}>{displayDigest.themeOfTheWeek}</Text>
+                </View>
+              </View>
+            )}
             {displayDigest.topMemory && (
               <Pressable
                 onPress={() => router.push(`/memory/${displayDigest.topMemory!.id}` as any)}
@@ -214,6 +226,25 @@ export default function HomeScreen() {
                 </View>
                 <MaterialIcons name="chevron-right" size={14} color="rgba(255,255,255,0.3)" />
               </Pressable>
+            )}
+            {/* On This Day */}
+            {displayDigest.onThisDay && displayDigest.onThisDay.length > 0 && (
+              <View style={styles.onThisDaySection}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                  <MaterialIcons name="history" size={14} color="#FFA500" />
+                  <Text style={styles.onThisDayTitle}>On This Day</Text>
+                </View>
+                {displayDigest.onThisDay.map((mem) => (
+                  <Pressable
+                    key={mem.id}
+                    onPress={() => router.push(`/memory/${mem.id}` as any)}
+                    style={({ pressed }) => [styles.onThisDayItem, pressed && { opacity: 0.7 }]}
+                  >
+                    <Text style={styles.onThisDayDate}>{new Date(mem.date).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}</Text>
+                    <Text style={styles.onThisDayMemTitle} numberOfLines={1}>{mem.title}</Text>
+                  </Pressable>
+                ))}
+              </View>
             )}
           </GoldenCard>
         </View>
@@ -428,6 +459,9 @@ export default function HomeScreen() {
               { label: "Tags", icon: "label", color: "#CE93D8", route: "/tags" },
               { label: "Reminders", icon: "notifications", color: "#FFA500", route: "/reminders" },
               { label: "Export", icon: "cloud-download", color: "#80CBC4", route: "/export" },
+              { label: "Teams", icon: "groups", color: "#4FC3F7", route: "/teams" },
+              { label: "Referrals", icon: "card-giftcard", color: "#FF6B6B", route: "/referrals" },
+              { label: "Share", icon: "share", color: "#BB86FC", route: "/share-insight" },
             ].map((action) => (
               <Pressable
                 key={action.label}
@@ -444,16 +478,26 @@ export default function HomeScreen() {
         </View>
 
         {/* Upgrade CTA */}
-        {subscription === "basic" && (
+        {(subscription === "basic" || subscription === "pro") && (
           <Pressable
-            onPress={() => { triggerTransition("burst"); router.push("/subscription" as any); }}
+            onPress={() => {
+              trackUpgradePrompt(subscription === "basic" ? "pro_upgrade" : "teams_upgrade", "home");
+              triggerTransition("burst");
+              router.push("/subscription" as any);
+            }}
             style={({ pressed }) => [pressed && { opacity: 0.8 }]}
           >
             <LinearGradient colors={["rgba(255,215,0,0.12)", "rgba(255,165,0,0.06)"]} style={styles.upgradeBanner}>
               <MaterialIcons name="workspace-premium" size={24} color="#FFD700" />
               <View style={{ flex: 1 }}>
-                <Text style={styles.upgradeTitle}>Upgrade to Pro</Text>
-                <Text style={styles.upgradeSub}>Unlimited memories, smart reminders, collaboration & more</Text>
+                <Text style={styles.upgradeTitle}>
+                  {subscription === "basic" ? "Upgrade to Pro" : "Upgrade to Teams"}
+                </Text>
+                <Text style={styles.upgradeSub}>
+                  {subscription === "basic"
+                    ? "Unlimited memories, smart reminders, collaboration & more"
+                    : "Shared vaults, admin controls, API access & SSO"}
+                </Text>
               </View>
               <MaterialIcons name="chevron-right" size={16} color="#FFD700" />
             </LinearGradient>
@@ -541,4 +585,12 @@ const styles = StyleSheet.create({
   reminderDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#FFA500" },
   reminderTitle: { fontSize: 14, fontWeight: "600", color: "#FFFFFF" },
   reminderDate: { fontSize: 12, color: "rgba(255,255,255,0.7)" },
+  themeWeekRow: { flexDirection: "row", alignItems: "flex-start", gap: 8, padding: 10, borderRadius: 10, backgroundColor: "rgba(187,134,252,0.08)", marginTop: 10, borderWidth: 1, borderColor: "rgba(187,134,252,0.15)" },
+  themeWeekLabel: { fontSize: 11, fontWeight: "700", color: "#BB86FC", letterSpacing: 0.5, textTransform: "uppercase" },
+  themeWeekText: { fontSize: 13, lineHeight: 18, color: "rgba(255,255,255,0.8)", marginTop: 2 },
+  onThisDaySection: { marginTop: 10, padding: 10, borderRadius: 10, backgroundColor: "rgba(255,165,0,0.06)", borderWidth: 1, borderColor: "rgba(255,165,0,0.15)" },
+  onThisDayTitle: { fontSize: 13, fontWeight: "700", color: "#FFA500" },
+  onThisDayItem: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 5 },
+  onThisDayDate: { fontSize: 11, fontWeight: "600", color: "rgba(255,165,0,0.7)", width: 80 },
+  onThisDayMemTitle: { fontSize: 13, color: "rgba(255,255,255,0.8)", flex: 1 },
 });

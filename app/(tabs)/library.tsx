@@ -32,7 +32,7 @@ const FILTERS = [
 export default function LibraryScreen() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const { isGuest, favorites, tags, memoryTags, getMemoriesByTag } = useAppState();
+  const { isGuest, favorites, tags, memoryTags, getMemoriesByTag, trackUpgradePrompt } = useAppState();
   const { triggerTransition } = useTransition();
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
@@ -69,6 +69,10 @@ export default function LibraryScreen() {
     const fav = favorites.includes(item.id);
     const itemTagIds = memoryTags[item.id] || [];
     const itemTags = tags.filter((t) => itemTagIds.includes(t.id));
+    // OCR indicator: show when memory has extracted text from images
+    const hasOcrContent = item.type === "image" && item.aiExtractedText && item.aiExtractedText.length > 0;
+    // Semantic search indicator: show when search matched via AI summary or topics rather than exact text
+    const isSemanticMatch = search.trim().length > 0 && item.aiSummary && !item.title.toLowerCase().includes(search.toLowerCase()) && !item.content?.toLowerCase().includes(search.toLowerCase());
 
     return (
       <Pressable
@@ -90,6 +94,20 @@ export default function LibraryScreen() {
               </View>
               <Text style={styles.cardSummary} numberOfLines={2}>{item.aiSummary || item.content || "Processing..."}</Text>
               <View style={styles.tagRow}>
+                {/* OCR Badge */}
+                {hasOcrContent && (
+                  <View style={styles.ocrBadge}>
+                    <MaterialIcons name="document-scanner" size={10} color="#4FC3F7" />
+                    <Text style={styles.ocrBadgeText}>OCR</Text>
+                  </View>
+                )}
+                {/* Semantic Match Badge */}
+                {isSemanticMatch && (
+                  <View style={styles.semanticBadge}>
+                    <MaterialIcons name="auto-awesome" size={10} color="#BB86FC" />
+                    <Text style={styles.semanticBadgeText}>AI Match</Text>
+                  </View>
+                )}
                 {item.aiTopics?.slice(0, 2).map((topic: string) => (
                   <View key={topic} style={styles.aiTag}>
                     <Text style={styles.aiTagText}>{topic}</Text>
@@ -108,7 +126,7 @@ export default function LibraryScreen() {
         </GoldenCard>
       </Pressable>
     );
-  }, [router, favorites, memoryTags, tags]);
+  }, [router, favorites, memoryTags, tags, search]);
 
   return (
     <CinematicScreen screenName="library">
@@ -227,6 +245,18 @@ const styles = StyleSheet.create({
   aiTag: { flexDirection: "row", alignItems: "center", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: "rgba(255,215,0,0.1)", gap: 4 },
   aiTagText: { fontSize: 11, color: "#FFD700" },
   tagDot: { width: 6, height: 6, borderRadius: 3 },
+  ocrBadge: {
+    flexDirection: "row", alignItems: "center", paddingHorizontal: 7, paddingVertical: 3,
+    borderRadius: 8, backgroundColor: "rgba(79,195,247,0.12)", gap: 3,
+    borderWidth: 1, borderColor: "rgba(79,195,247,0.25)",
+  },
+  ocrBadgeText: { fontSize: 10, fontWeight: "700", color: "#4FC3F7", letterSpacing: 0.5 },
+  semanticBadge: {
+    flexDirection: "row", alignItems: "center", paddingHorizontal: 7, paddingVertical: 3,
+    borderRadius: 8, backgroundColor: "rgba(187,134,252,0.12)", gap: 3,
+    borderWidth: 1, borderColor: "rgba(187,134,252,0.25)",
+  },
+  semanticBadgeText: { fontSize: 10, fontWeight: "700", color: "#BB86FC", letterSpacing: 0.5 },
   emptyState: { alignItems: "center", paddingTop: 60, gap: 8 },
   emptyTitle: { fontSize: 17, fontWeight: "600", color: "#FFFFFF" },
   emptySub: { fontSize: 14, textAlign: "center", color: "rgba(255,255,255,0.7)" },
