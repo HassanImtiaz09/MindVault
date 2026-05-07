@@ -1,14 +1,15 @@
-import { and, desc, eq, like, or, sql } from "drizzle-orm";
+import { and, desc, eq, like, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, memories, InsertMemory, Memory, chatMessages, InsertChatMessage } from "../drizzle/schema";
+import { modelRoutingLog, InsertModelRoutingLog } from "../drizzle/schema/model_routing_log";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
+  if (!_db && ENV.databaseUrl) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _db = drizzle(ENV.databaseUrl);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -223,4 +224,12 @@ export async function getKnowledgeGraphData(userId: number) {
     return { source, target, weight };
   });
   return { nodes, edges };
+}
+
+// --- Model routing telemetry ---
+
+export async function logModelRouting(data: InsertModelRoutingLog): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(modelRoutingLog).values(data);
 }

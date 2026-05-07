@@ -1,4 +1,7 @@
 import "dotenv/config";
+import { initObservability, Sentry } from "./observability";
+initObservability();
+
 import express from "express";
 import { createServer } from "http";
 import net from "net";
@@ -67,6 +70,9 @@ async function startServer() {
       createContext,
     }),
   );
+
+  // Sentry error handler must come AFTER all routes/middleware but BEFORE any custom error middleware.
+  Sentry.setupExpressErrorHandler(app);
 
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);

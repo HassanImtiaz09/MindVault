@@ -15,6 +15,13 @@
       "when": 1773680552791,
       "tag": "0001_public_lifeguard",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1778146747949,
+      "tag": "0002_m0_1_model_routing_log",
+      "breakpoints": true
     }
   ]
 }

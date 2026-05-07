@@ -149,6 +149,8 @@ STRIPE_PUBLISHABLE_KEY
 Architectural decisions made by Hassan that future sessions must honour. Each entry: decision, milestone it lands in, and date.
 
 - **2026-05-07 — M0.1 LLM provider routing.** The existing `forge.manus.im` proxy is removed in M0.1. All Anthropic calls go via Anthropic SDK direct, then through Helicone. All OpenAI calls go via OpenAI SDK direct, then through Helicone. All Gemini calls go via Google AI SDK direct, then through Helicone. The Manus Forge dependency is fully removed in M0.1.
+- **2026-05-07 — Storage and owner-push graceful stubs.** `server/storage.ts` (`storagePut`, `storageGet`) and `server/_core/notification.ts` (`notifyOwner`) are migrated to graceful no-op stubs in M0.1. They were riding on `forge.manus.im` for non-LLM features; rather than pull the M0.3 R2 migration forward, they return structured `{ ok: false, error: "STORAGE_NOT_CONFIGURED" | "NOTIFICATION_NOT_CONFIGURED", reason }` responses and log a warning. **Runtime impact:** file-upload memories will return `STORAGE_NOT_CONFIGURED` until M0.3 wires Cloudflare R2; owner push returns `NOTIFICATION_NOT_CONFIGURED` pending a later milestone (TBD; likely M5 or later). User-facing push (`expo-notifications`) is unaffected because it does not go through this helper.
+- **2026-05-07 — Speech-to-text model.** STT uses `whisper-1` via OpenAI SDK (large-v2 internally), proxied through Helicone, in M0.1+. Nothing calls STT until M4 voice OSCE, so accuracy is not yet a constraint. If clinical-grade transcription accuracy becomes a blocker in M4, evaluate Groq Whisper, Replicate Whisper-Large-v3, or Deepgram Nova-2 as a swap. Until then, `whisper-1` is sufficient.
 
 ## Spec overrides
 
