@@ -14,6 +14,8 @@ Web app + native iOS + native Android. Cloudflare-led backend.
 
 ## The locked tech stack — DO NOT DEVIATE
 
+> Note: PlanetScale's Postgres beta was sunset; we use MySQL. Existing repo already uses mysql2 so M0.2 is just pointing at PlanetScale, not a Postgres migration.
+
 - Marketing site: **Next.js 15 on Cloudflare Pages**
 - Web app: **Expo Web (existing)**
 - Native iOS / Android: **Expo SDK 54+**
@@ -141,6 +143,12 @@ STRIPE_SECRET_KEY
 STRIPE_WEBHOOK_SECRET
 STRIPE_PUBLISHABLE_KEY
 ```
+
+## Decisions log
+
+Architectural decisions made by Hassan that future sessions must honour. Each entry: decision, milestone it lands in, and date.
+
+- **2026-05-07 — M0.1 LLM provider routing.** The existing `forge.manus.im` proxy is removed in M0.1. All Anthropic calls go via Anthropic SDK direct, then through Helicone. All OpenAI calls go via OpenAI SDK direct, then through Helicone. All Gemini calls go via Google AI SDK direct, then through Helicone. The Manus Forge dependency is fully removed in M0.1.
 
 ## Where to start each session
 
