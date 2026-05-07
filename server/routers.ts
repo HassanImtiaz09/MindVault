@@ -1,9 +1,10 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { COOKIE_NAME } from "../shared/const.js";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
-import { invokeLLM } from "./_core/llm";
+import { modelRouter } from "./_core/model_router";
 import { transcribeAudio } from "./_core/voiceTranscription";
 import * as db from "./db";
 import { storagePut } from "./storage";
@@ -71,7 +72,9 @@ export const appRouter = router({
           const buffer = Buffer.from(input.fileBase64, "base64");
           const key = `memories/${ctx.user.id}/${Date.now()}-${input.fileName}`;
           const result = await storagePut(key, buffer, input.fileMimeType || "application/octet-stream");
-          fileUrl = result.url;
+          if ("ok" in result && result.ok === false) {
+            throw new TRPCError({ code: "BAD_REQUEST", message: result.reason });
+          }
         }
         const memoryId = await db.createMemory({
           userId: ctx.user.id,
@@ -121,11 +124,11 @@ export const appRouter = router({
             return parts.join("\n");
           })
           .join("\n---\n");
-        const response = await invokeLLM({
+        const response = await modelRouter.invoke("vault.qa", {
           messages: [
             {
               role: "system",
-              content: `You are MindVault AI, a personal knowledge assistant. Answer questions based ONLY on the user's stored knowledge below. If you reference specific memories, cite them as [Memory #ID]. Format your response with clear structure using markdown.\n\nUSER'S KNOWLEDGE BASE:\n${knowledgeContext}`,
+              content: `You are DocVault AI, a personal knowledge assistant. Answer questions based ONLY on the user's stored knowledge below. If you reference specific memories, cite them as [Memory #ID]. Format your response with clear structure using markdown.\n\nUSER'S KNOWLEDGE BASE:\n${knowledgeContext}`,
             },
             { role: "user", content: input.question },
           ],
@@ -161,11 +164,11 @@ export const appRouter = router({
           return parts.join(" | ");
         })
         .join("\n");
-      const response = await invokeLLM({
+      const response = await modelRouter.invoke("report.weekly", {
         messages: [
           {
             role: "system",
-            content: `You are MindVault AI. Generate a weekly knowledge summary. Return JSON:\n{\n  "summary": "A 2-3 sentence overview",\n  "newInsights": ["insight1", "insight2"],\n  "recurringThemes": ["theme1", "theme2"],\n  "knowledgeGaps": ["gap1", "gap2"]\n}`,
+            content: `You are DocVault AI. Generate a weekly knowledge summary. Return JSON:\n{\n  "summary": "A 2-3 sentence overview",\n  "newInsights": ["insight1", "insight2"],\n  "recurringThemes": ["theme1", "theme2"],\n  "knowledgeGaps": ["gap1", "gap2"]\n}`,
           },
           { role: "user", content: `Here are the memories saved this week:\n${memoryContext}` },
         ],
@@ -204,11 +207,11 @@ export const appRouter = router({
             return parts.join(" - ");
           })
           .join("\n");
-        const response = await invokeLLM({
+        const response = await modelRouter.invoke("agent.deepStudy", {
           messages: [
             {
               role: "system",
-              content: `You are MindVault AI, a creative idea generator. Based on the user's stored knowledge, generate innovative and actionable ideas. Return JSON:\n{\n  "ideas": [\n    { "title": "Idea title", "description": "Detailed description", "relatedTopics": ["topic1", "topic2"] }\n  ]\n}\n\nUSER'S KNOWLEDGE BASE:\n${knowledgeContext}`,
+              content: `You are DocVault AI, a creative idea generator. Based on the user's stored knowledge, generate innovative and actionable ideas. Return JSON:\n{\n  "ideas": [\n    { "title": "Idea title", "description": "Detailed description", "relatedTopics": ["topic1", "topic2"] }\n  ]\n}\n\nUSER'S KNOWLEDGE BASE:\n${knowledgeContext}`,
             },
             { role: "user", content: input.prompt },
           ],
@@ -242,9 +245,9 @@ export const appRouter = router({
           financial: "Analyze this financial document. Break down: key figures, trends, important ratios, and what the numbers mean in simple terms.",
           research: "Analyze this document for research purposes. Extract: key findings, methodology, data points, conclusions, and how it relates to the broader field.",
         };
-        const response = await invokeLLM({
+        const response = await modelRouter.invoke("agent.deepStudy", {
           messages: [
-            { role: "system", content: `You are MindVault AI, an expert document analyzer. ${prompts[input.analysisType]}` },
+            { role: "system", content: `You are DocVault AI, an expert document analyzer. ${prompts[input.analysisType]}` },
             { role: "user", content: contextParts.join("\n\n").substring(0, 6000) },
           ],
         });
@@ -307,7 +310,7 @@ async function processMemory(
 
     if (type === "image" && fileUrl) {
       try {
-        const response = await invokeLLM({
+        const response = await modelRouter.invoke("vault.qa", {
           messages: [
             {
               role: "user",
@@ -327,7 +330,7 @@ async function processMemory(
 
     if (type === "document" && fileUrl) {
       try {
-        const response = await invokeLLM({
+        const response = await modelRouter.invoke("vault.qa", {
           messages: [
             {
               role: "user",
@@ -350,7 +353,7 @@ async function processMemory(
     }
 
     if (textToProcess) {
-      const analysisResponse = await invokeLLM({
+      const analysisResponse = await modelRouter.invoke("cards.generate", {
         messages: [
           {
             role: "system",

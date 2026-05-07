@@ -1,10 +1,8 @@
-/**
- * Quick example (matches curl usage):
- *   await callDataApi("Youtube/search", {
- *     query: { gl: "US", hl: "en", q: "manus" },
- *   })
- */
-import { ENV } from "./env";
+// Generic Manus data API helper.
+//
+// M0.1 status: forge proxy removed. No in-repo callers exist; the helper is
+// kept as a graceful stub so external code that imports it gets a structured
+// error rather than an undefined-symbol crash.
 
 export type DataApiCallOptions = {
   query?: Record<string, unknown>;
@@ -13,52 +11,20 @@ export type DataApiCallOptions = {
   formData?: Record<string, unknown>;
 };
 
+export type DataApiUnavailable = {
+  ok: false;
+  error: "DATA_API_NOT_CONFIGURED";
+  reason: string;
+};
+
 export async function callDataApi(
-  apiId: string,
-  options: DataApiCallOptions = {},
-): Promise<unknown> {
-  if (!ENV.forgeApiUrl) {
-    throw new Error("BUILT_IN_FORGE_API_URL is not configured");
-  }
-  if (!ENV.forgeApiKey) {
-    throw new Error("BUILT_IN_FORGE_API_KEY is not configured");
-  }
-
-  // Build the full URL by appending the service path to the base URL
-  const baseUrl = ENV.forgeApiUrl.endsWith("/") ? ENV.forgeApiUrl : `${ENV.forgeApiUrl}/`;
-  const fullUrl = new URL("webdevtoken.v1.WebDevService/CallApi", baseUrl).toString();
-
-  const response = await fetch(fullUrl, {
-    method: "POST",
-    headers: {
-      accept: "application/json",
-      "content-type": "application/json",
-      "connect-protocol-version": "1",
-      authorization: `Bearer ${ENV.forgeApiKey}`,
-    },
-    body: JSON.stringify({
-      apiId,
-      query: options.query,
-      body: options.body,
-      path_params: options.pathParams,
-      multipart_form_data: options.formData,
-    }),
-  });
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new Error(
-      `Data API request failed (${response.status} ${response.statusText})${detail ? `: ${detail}` : ""}`,
-    );
-  }
-
-  const payload = await response.json().catch(() => ({}));
-  if (payload && typeof payload === "object" && "jsonData" in payload) {
-    try {
-      return JSON.parse((payload as Record<string, string>).jsonData ?? "{}");
-    } catch {
-      return (payload as Record<string, unknown>).jsonData;
-    }
-  }
-  return payload;
+  _apiId: string,
+  _options: DataApiCallOptions = {},
+): Promise<DataApiUnavailable> {
+  console.warn("[dataApi] forge proxy removed in M0.1; helper is a no-op");
+  return {
+    ok: false,
+    error: "DATA_API_NOT_CONFIGURED",
+    reason: "Generic data API helper has no transport configured. No DocVault callers exist.",
+  };
 }

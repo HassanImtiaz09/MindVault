@@ -149,6 +149,15 @@ STRIPE_PUBLISHABLE_KEY
 Architectural decisions made by Hassan that future sessions must honour. Each entry: decision, milestone it lands in, and date.
 
 - **2026-05-07 — M0.1 LLM provider routing.** The existing `forge.manus.im` proxy is removed in M0.1. All Anthropic calls go via Anthropic SDK direct, then through Helicone. All OpenAI calls go via OpenAI SDK direct, then through Helicone. All Gemini calls go via Google AI SDK direct, then through Helicone. The Manus Forge dependency is fully removed in M0.1.
+- **2026-05-07 — Storage and owner-push graceful stubs.** `server/storage.ts` (`storagePut`, `storageGet`) and `server/_core/notification.ts` (`notifyOwner`) are migrated to graceful no-op stubs in M0.1. They were riding on `forge.manus.im` for non-LLM features; rather than pull the M0.3 R2 migration forward, they return structured `{ ok: false, error: "STORAGE_NOT_CONFIGURED" | "NOTIFICATION_NOT_CONFIGURED", reason }` responses and log a warning. **Runtime impact:** file-upload memories will return `STORAGE_NOT_CONFIGURED` until M0.3 wires Cloudflare R2; owner push returns `NOTIFICATION_NOT_CONFIGURED` pending a later milestone (TBD; likely M5 or later). User-facing push (`expo-notifications`) is unaffected because it does not go through this helper.
+- **2026-05-07 — Speech-to-text model.** STT uses `whisper-1` via OpenAI SDK (large-v2 internally), proxied through Helicone, in M0.1+. Nothing calls STT until M4 voice OSCE, so accuracy is not yet a constraint. If clinical-grade transcription accuracy becomes a blocker in M4, evaluate Groq Whisper, Replicate Whisper-Large-v3, or Deepgram Nova-2 as a swap. Until then, `whisper-1` is sufficient.
+
+## Spec overrides
+
+The following entries in `docs/spec/DocVault_Master_Build_Spec.docx` are superseded by CLAUDE.md and the Decisions log. Treat CLAUDE.md as authoritative when in conflict.
+
+- 2026-05-07 — Database. § 6 references to "Postgres" and § 7 M0.2 "PlanetScale Postgres setup / replace mysql2 with postgres / Postgres migration verified" are erroneous. PlanetScale shut down their Postgres beta in 2024. We use **PlanetScale MySQL (UK region)**. M0.2 is consequently "point the existing mysql2 connection at PlanetScale UK and add the M0 schema tables", NOT a Postgres migration. Where the spec references Postgres-specific features (jsonb, vector ops), use MySQL 8 JSON type and Turbopuffer for vectors.
+- 2026-05-07 — M0.1 job count. § 7 M0.1 acceptance lists 6 named jobs (cards.generate, plan.compose, report.weekly, agent.deepStudy, osce.judge, video.script). M0.1 ships **7** jobs — add `vault.qa` (Sonnet 4.6, RAG-grounded) for the existing `ai.query` tRPC procedure migration. The M0-level acceptance "6 named jobs to 5+ providers" therefore reads as "7 named jobs to 3 providers (Anthropic, OpenAI, Google)" in M0.1; ElevenLabs/Hume/Voyage adapters land when their first consuming jobs do (Voyage in M1, ElevenLabs in M3, Hume in M4).
 
 ## Where to start each session
 
