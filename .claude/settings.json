@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install)",
+      "Bash(pnpm test*)",
+      "Bash(pnpm lint*)",
+      "Bash(pnpm check)",
+      "Bash(pnpm dev*)",
+      "Bash(pnpm build*)",
+      "Bash(pnpm db:*)",
+      "Bash(pnpm format)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git checkout*)",
+      "Bash(git switch*)",
+      "Bash(git branch*)",
+      "Bash(git push*)",
+      "Bash(git pull*)",
+      "Bash(gh pr*)",
+      "Bash(gh issue*)",
+      "Bash(gh repo view)",
+      "Bash(npx drizzle-kit*)",
+      "Bash(node --version)",
+      "Bash(pnpm --version)",
+      "Bash(ls*)",
+      "Bash(cat*)",
+      "Bash(grep*)",
+      "Bash(rg*)",
+      "Bash(find*)"
+    ],
+    "deny": [
+      "Bash(rm -rf*)",
+      "Bash(git push --force*)",
+      "Bash(git reset --hard origin*)",
+      "Bash(npm publish*)",
+      "Bash(pnpm publish*)",
+      "Bash(env*)",
+      "Bash(printenv*)",
+      "Bash(cat .env*)",
+      "Bash(cat */.env*)"
+    ]
+  },
+  "model": "claude-sonnet-4-6",
+  "outputStyle": "default"
+}
