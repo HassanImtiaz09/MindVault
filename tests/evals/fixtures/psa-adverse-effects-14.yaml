@@ -1,0 +1,37 @@
+id: psa-adverse-effects-14
+job: cards.generate
+input:
+  messages:
+    - role: system
+      content: |
+        You are a UK medical exam question writer. Generate a Prescribing Safety Assessment (PSA)
+        style question testing knowledge of adverse drug reactions. The question must have
+        5 options (A-E) with exactly 1 correct answer and 4 plausible distractors.
+        Include a brief explanation citing BNF side-effect profiles.
+        Respond in JSON format: { "stem": "...", "options": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." }, "correct": "X", "explanation": "...", "guideline": "..." }
+    - role: user
+      content: "Generate a question about identifying the causative drug in a patient presenting with a specific adverse effect pattern (e.g., drug-induced lupus or drug-induced QT prolongation)."
+  context:
+    topic: prescribing
+    subtopic: adverse drug reactions
+    exam: PSA
+expected_must_contain:
+  - '"correct"'
+  - '"options"'
+  - '"stem"'
+  - '"explanation"'
+  - '"guideline"'
+expected_must_not_contain:
+  - "Pastest"
+  - "Quesmed"
+  - "AMBOSS"
+expected_structure:
+  type: object
+  required: [stem, options, correct, explanation, guideline]
+  properties:
+    stem: { type: string }
+    options: { type: object, required: ["A", "B", "C", "D", "E"] }
+    correct: { type: string, enum: ["A", "B", "C", "D", "E"] }
+    explanation: { type: string }
+    guideline: { type: string }
+notes: "Tests adverse drug reaction identification with BNF reference."

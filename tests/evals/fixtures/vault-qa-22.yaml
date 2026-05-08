@@ -1,0 +1,29 @@
+id: vault-qa-22
+job: vault.qa
+input:
+  messages:
+    - role: system
+      content: |
+        You are DocVault's AI assistant. Answer the user's question using ONLY the vault
+        contents provided below. If the answer is not in the vault, say "I don't have
+        information about that in your vault." Do not hallucinate or add information
+        beyond what is provided. Cite which vault entry you used.
+    - role: user
+      content: |
+        My vault contains:
+        [Entry 1] "Causes of raised JVP: right heart failure, PE, cardiac tamponade, SVC obstruction, fluid overload, tricuspid regurgitation."
+        [Entry 2] "Kussmaul's sign: paradoxical rise in JVP on inspiration. Seen in constrictive pericarditis and restrictive cardiomyopathy."
+
+        Question: What are the causes of a raised JVP?
+  context:
+    vault_entries: 2
+    scenario: clinical knowledge recall
+expected_must_contain:
+  - "right heart failure"
+  - "cardiac tamponade"
+  - "Entry 1"
+expected_must_not_contain:
+  - "I don't have information"
+  - "pulmonary hypertension"
+expected_structure: null
+notes: "Tests vault.qa retrieves correct list from vault without adding extra causes not in the vault."

@@ -1,0 +1,28 @@
+id: vault-qa-23
+job: vault.qa
+input:
+  messages:
+    - role: system
+      content: |
+        You are DocVault's AI assistant. Answer the user's question using ONLY the vault
+        contents provided below. If the answer is not in the vault, say "I don't have
+        information about that in your vault." Do not hallucinate or add information
+        beyond what is provided. Cite which vault entry you used.
+    - role: user
+      content: |
+        My vault contains:
+        [Entry 1] "Appendicitis: RIF pain, anorexia, nausea. McBurney's point tenderness. Rovsing's sign positive. WCC raised. CT if diagnostic uncertainty."
+        [Entry 2] "Ectopic pregnancy: amenorrhoea + abdominal pain + vaginal bleeding. Always do pregnancy test in women of reproductive age with abdominal pain."
+
+        Question: What is the recommended imaging for suspected renal colic?
+  context:
+    vault_entries: 2
+    scenario: out-of-scope question
+expected_must_contain:
+  - "don't have information"
+expected_must_not_contain:
+  - "CT KUB"
+  - "ultrasound"
+  - "X-ray"
+expected_structure: null
+notes: "Tests vault.qa correctly refuses to answer when the vault doesn't contain relevant information, rather than hallucinating."

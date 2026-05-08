@@ -1,0 +1,37 @@
+id: psa-calculation-12
+job: cards.generate
+input:
+  messages:
+    - role: system
+      content: |
+        You are a UK medical exam question writer. Generate a Prescribing Safety Assessment (PSA)
+        style question testing dose calculation. The question must have
+        5 options (A-E) with exactly 1 correct numerical answer and 4 plausible distractors.
+        Show the calculation in the explanation and cite BNF dosing guidance.
+        Respond in JSON format: { "stem": "...", "options": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." }, "correct": "X", "explanation": "...", "guideline": "..." }
+    - role: user
+      content: "Generate a question requiring calculation of a gentamicin loading dose for a 72kg patient with normal renal function. Include the weight-based calculation."
+  context:
+    topic: prescribing
+    subtopic: dose calculation
+    exam: PSA
+expected_must_contain:
+  - '"correct"'
+  - '"options"'
+  - '"stem"'
+  - '"explanation"'
+  - "mg"
+expected_must_not_contain:
+  - "Pastest"
+  - "Quesmed"
+  - "AMBOSS"
+expected_structure:
+  type: object
+  required: [stem, options, correct, explanation, guideline]
+  properties:
+    stem: { type: string }
+    options: { type: object, required: ["A", "B", "C", "D", "E"] }
+    correct: { type: string, enum: ["A", "B", "C", "D", "E"] }
+    explanation: { type: string }
+    guideline: { type: string }
+notes: "Tests gentamicin dose calculation accuracy. Expects weight-based calculation in explanation."

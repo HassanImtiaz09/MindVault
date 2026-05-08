@@ -1,0 +1,68 @@
+id: osce-judge-30
+job: osce.judge
+input:
+  messages:
+    - role: system
+      content: |
+        You are DocVault's OSCE performance judge. Evaluate the student's OSCE station
+        performance transcript. Score each domain 0-4 (0=not attempted, 1=poor, 2=borderline,
+        3=competent, 4=excellent). Provide specific feedback with timestamps.
+        Output JSON: { "station": "...", "overall_score": N, "pass": bool, "domains": { "communication": N, "clinical_knowledge": N, "examination_technique": N, "professionalism": N }, "feedback": [{ "timestamp": "MM:SS", "domain": "...", "comment": "..." }], "summary": "..." }
+    - role: user
+      content: |
+        Station: History taking — chest pain
+        Duration: 8 minutes
+        Transcript:
+        [00:00] Student: "Hello, my name is Dr Smith, I'm one of the junior doctors. Can I confirm your name and date of birth?"
+        [00:15] Patient: "Yes, I'm John, born 15th March 1965."
+        [00:20] Student: "What's brought you in today?"
+        [00:25] Patient: "I've had this crushing pain in my chest since this morning."
+        [00:30] Student: "Can you tell me more about the pain? Where exactly is it?"
+        [00:40] Patient: "Right in the centre, feels like an elephant sitting on my chest."
+        [00:50] Student: "Does it go anywhere else?"
+        [00:55] Patient: "Yes, down my left arm and into my jaw."
+        [01:00] Student: "On a scale of 1-10, how bad is it?"
+        [01:05] Patient: "About 8 out of 10."
+        [01:10] Student: "When did it start and what were you doing?"
+        [01:15] Patient: "About 6am, I was just getting out of bed."
+        [01:20] Student: "Has anything made it better or worse?"
+        [01:25] Patient: "GTN spray didn't help. Nothing makes it better."
+        [01:30] Student: "Have you had this before?"
+        [01:35] Patient: "I get angina but this is much worse."
+        [02:00] Student: "Do you have any other symptoms — shortness of breath, nausea, sweating?"
+        [02:10] Patient: "Yes, I feel sick and I'm sweating a lot."
+        [02:20] Student: "I'd like to ask about your past medical history. Do you have any other conditions?"
+        [02:30] Patient: "High blood pressure, high cholesterol, and type 2 diabetes."
+        [02:40] Student: "What medications are you on?"
+        [02:45] Patient: "Amlodipine, atorvastatin, metformin, and GTN spray."
+        [03:00] Student: "Any allergies?"
+        [03:05] Patient: "Penicillin — I get a rash."
+        [03:10] Student: "Do you smoke or drink alcohol?"
+        [03:15] Patient: "I smoke 20 a day for 30 years. I drink about 10 pints a week."
+        [03:30] Student: "Is there any family history of heart problems?"
+        [03:35] Patient: "My dad had a heart attack at 55."
+        [03:45] Student: "Thank you. Based on what you've told me, I'm concerned this could be a heart attack. We need to do an ECG and blood tests urgently. Do you have any questions?"
+  context:
+    station_type: history taking
+    scenario: chest pain
+expected_must_contain:
+  - '"domains"'
+  - '"communication"'
+  - '"clinical_knowledge"'
+  - '"pass"'
+  - '"feedback"'
+expected_must_not_contain:
+  - "Pastest"
+  - "Quesmed"
+  - "AMBOSS"
+expected_structure:
+  type: object
+  required: [station, overall_score, pass, domains, feedback, summary]
+  properties:
+    station: { type: string }
+    overall_score: { type: number }
+    pass: { type: boolean }
+    domains: { type: object, required: [communication, clinical_knowledge, examination_technique, professionalism] }
+    feedback: { type: array }
+    summary: { type: string }
+notes: "Tests osce.judge produces structured rubric scoring with timestamped feedback for a chest pain history station."

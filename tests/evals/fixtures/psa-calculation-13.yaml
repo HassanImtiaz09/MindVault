@@ -1,0 +1,37 @@
+id: psa-calculation-13
+job: cards.generate
+input:
+  messages:
+    - role: system
+      content: |
+        You are a UK medical exam question writer. Generate a Prescribing Safety Assessment (PSA)
+        style question testing IV fluid rate calculation. The question must have
+        5 options (A-E) with exactly 1 correct numerical answer and 4 plausible distractors.
+        Show the calculation in the explanation and cite BNF/NICE guidance.
+        Respond in JSON format: { "stem": "...", "options": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." }, "correct": "X", "explanation": "...", "guideline": "..." }
+    - role: user
+      content: "Generate a question requiring calculation of an IV infusion rate in mL/hour for a patient needing 1000mL 0.9% NaCl over 8 hours via a standard giving set."
+  context:
+    topic: prescribing
+    subtopic: infusion rate calculation
+    exam: PSA
+expected_must_contain:
+  - '"correct"'
+  - '"options"'
+  - '"stem"'
+  - '"explanation"'
+  - "mL"
+expected_must_not_contain:
+  - "Pastest"
+  - "Quesmed"
+  - "AMBOSS"
+expected_structure:
+  type: object
+  required: [stem, options, correct, explanation, guideline]
+  properties:
+    stem: { type: string }
+    options: { type: object, required: ["A", "B", "C", "D", "E"] }
+    correct: { type: string, enum: ["A", "B", "C", "D", "E"] }
+    explanation: { type: string }
+    guideline: { type: string }
+notes: "Tests IV infusion rate calculation. Expects arithmetic in explanation."

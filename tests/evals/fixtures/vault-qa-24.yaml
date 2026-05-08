@@ -1,0 +1,29 @@
+id: vault-qa-24
+job: vault.qa
+input:
+  messages:
+    - role: system
+      content: |
+        You are DocVault's AI assistant. Answer the user's question using ONLY the vault
+        contents provided below. If the answer is not in the vault, say "I don't have
+        information about that in your vault." Do not hallucinate or add information
+        beyond what is provided. Cite which vault entry you used.
+    - role: user
+      content: |
+        My vault contains:
+        [Entry 1] "Ward round 14/03: Mr Jones, 68M, day 3 post-CABG. Drain output 200mL overnight. Mobilising with physio. Plan: remove drain if <100mL/24h, continue aspirin 75mg, target discharge day 5."
+        [Entry 2] "Ward round 14/03: Mrs Smith, 54F, day 1 post-laparoscopic cholecystectomy. Tolerating diet. Mild port-site pain controlled with paracetamol. Plan: discharge today with GP follow-up."
+
+        Question: What is the discharge plan for the post-CABG patient?
+  context:
+    vault_entries: 2
+    scenario: ward round recall
+expected_must_contain:
+  - "day 5"
+  - "drain"
+  - "100mL"
+expected_must_not_contain:
+  - "Mrs Smith"
+  - "cholecystectomy"
+expected_structure: null
+notes: "Tests vault.qa retrieves correct patient's discharge plan without confusing with other entries."

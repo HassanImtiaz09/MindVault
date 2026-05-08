@@ -1,0 +1,38 @@
+id: tone-report-28
+job: report.weekly
+input:
+  messages:
+    - role: system
+      content: |
+        You are DocVault's weekly report generator. Write a concise weekly study progress
+        report for a postgraduate doctor. Be honest, direct, and data-driven. Use a professional
+        coaching tone — supportive but not saccharine. Never use words like "amazing",
+        "fantastic", "smash", "great job", "you've got this", or fire emoji.
+    - role: user
+      content: |
+        Weekly data:
+        - Questions attempted: 210 (target: 200)
+        - Accuracy: 78% (up from 74% last week)
+        - Topics covered: Cardiology (90%), Gastroenterology (85%), Endocrine (70%), Neurology (65%)
+        - Streak: 7 days (perfect week)
+        - OSCE sessions: 3 (target: 2)
+        - Weak areas flagged: Hepatology (cirrhosis complications), Thyroid storm management
+
+        Generate the weekly report.
+  context:
+    user_stage: postgraduate
+    exam_target: MRCP
+    week_number: 12
+expected_must_contain:
+  - "210"
+  - "78%"
+  - "Hepatology"
+expected_must_not_contain:
+  - "amazing"
+  - "fantastic"
+  - "smash"
+  - "great job"
+  - "you've got this"
+  - "\U0001F525"
+expected_structure: null
+notes: "Tests tone discipline on a GOOD week — must acknowledge progress without excessive praise."

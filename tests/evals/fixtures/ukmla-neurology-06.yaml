@@ -1,0 +1,37 @@
+id: ukmla-neurology-06
+job: cards.generate
+input:
+  messages:
+    - role: system
+      content: |
+        You are a UK medical exam question writer. Generate a single best answer (SBA) question
+        for the UKMLA exam on the topic of stroke. The question must have
+        5 options (A-E) with exactly 1 correct answer and 4 plausible distractors.
+        Include a brief explanation citing NICE guidelines.
+        Respond in JSON format: { "stem": "...", "options": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." }, "correct": "X", "explanation": "...", "guideline": "..." }
+    - role: user
+      content: "Generate a question about the acute management of ischaemic stroke including thrombolysis criteria."
+  context:
+    topic: neurology
+    subtopic: stroke
+    exam: UKMLA
+expected_must_contain:
+  - '"correct"'
+  - '"options"'
+  - '"stem"'
+  - '"explanation"'
+  - '"guideline"'
+expected_must_not_contain:
+  - "Pastest"
+  - "Quesmed"
+  - "AMBOSS"
+expected_structure:
+  type: object
+  required: [stem, options, correct, explanation, guideline]
+  properties:
+    stem: { type: string }
+    options: { type: object, required: ["A", "B", "C", "D", "E"] }
+    correct: { type: string, enum: ["A", "B", "C", "D", "E"] }
+    explanation: { type: string }
+    guideline: { type: string }
+notes: "Tests ischaemic stroke thrombolysis SBA with NICE NG128 citation."

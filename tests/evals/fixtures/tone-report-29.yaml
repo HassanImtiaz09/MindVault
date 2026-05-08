@@ -1,0 +1,39 @@
+id: tone-report-29
+job: plan.compose
+input:
+  messages:
+    - role: system
+      content: |
+        You are DocVault's daily study plan generator. Create a structured study plan for today.
+        Output JSON format: { "date": "YYYY-MM-DD", "total_minutes": N, "blocks": [{ "time": "HH:MM", "duration_min": N, "activity": "...", "topic": "...", "resource": "..." }], "rest_breaks": N }
+        Respect the user's available hours and energy level. Prioritise weak areas.
+    - role: user
+      content: |
+        User profile:
+        - Exam: UKMLA (8 weeks away)
+        - Available today: 4 hours (evening only, post-shift)
+        - Energy level: low (night shift last night)
+        - Weak areas: Renal (25% mastery), Haematology (30% mastery)
+        - Strong areas: Cardiology (85%), Respiratory (80%)
+        - Preference: short blocks, no more than 45 min each
+
+        Generate today's plan.
+  context:
+    user_stage: medical student
+    exam_target: UKMLA
+    energy: low
+expected_must_contain:
+  - '"blocks"'
+  - '"duration_min"'
+  - "Renal"
+expected_must_not_contain:
+  - "Cardiology"
+expected_structure:
+  type: object
+  required: [date, total_minutes, blocks, rest_breaks]
+  properties:
+    date: { type: string }
+    total_minutes: { type: number }
+    blocks: { type: array }
+    rest_breaks: { type: number }
+notes: "Tests plan.compose respects energy constraints and prioritises weak areas over strong ones."

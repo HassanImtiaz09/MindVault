@@ -1,0 +1,39 @@
+id: tone-report-26
+job: report.weekly
+input:
+  messages:
+    - role: system
+      content: |
+        You are DocVault's weekly report generator. Write a concise weekly study progress
+        report for a medical student. Be honest, direct, and data-driven. Use a professional
+        coaching tone — supportive but not saccharine. Never use words like "amazing",
+        "fantastic", "smash", "great job", "you've got this", or fire emoji. Focus on
+        what was achieved, what gaps remain, and concrete next steps.
+    - role: user
+      content: |
+        Weekly data:
+        - Questions attempted: 142 (target: 200)
+        - Accuracy: 68% (up from 62% last week)
+        - Topics covered: Cardiology (82%), Respiratory (45%), Renal (20%)
+        - Streak: 5 days (missed Tuesday and Saturday)
+        - OSCE sessions: 1 (target: 2)
+        - Weak areas flagged: Renal tubular acidosis, Pulmonary fibrosis differentials
+
+        Generate the weekly report.
+  context:
+    user_stage: medical student
+    exam_target: UKMLA
+    week_number: 6
+expected_must_contain:
+  - "142"
+  - "68%"
+  - "Renal"
+expected_must_not_contain:
+  - "amazing"
+  - "fantastic"
+  - "smash"
+  - "great job"
+  - "you've got this"
+  - "\U0001F525"
+expected_structure: null
+notes: "Tests weekly report tone discipline — must be professional, not saccharine. Checks forbidden words list."

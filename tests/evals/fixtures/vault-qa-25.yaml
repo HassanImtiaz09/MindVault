@@ -1,0 +1,29 @@
+id: vault-qa-25
+job: vault.qa
+input:
+  messages:
+    - role: system
+      content: |
+        You are DocVault's AI assistant. Answer the user's question using ONLY the vault
+        contents provided below. If the answer is not in the vault, say "I don't have
+        information about that in your vault." Do not hallucinate or add information
+        beyond what is provided. Cite which vault entry you used.
+    - role: user
+      content: |
+        My vault contains:
+        [Entry 1] "Lecture notes: Cushing's syndrome — causes: iatrogenic (most common), pituitary adenoma (Cushing's disease), adrenal adenoma, ectopic ACTH (small cell lung cancer). Investigations: overnight dexamethasone suppression test, 24h urinary free cortisol, late-night salivary cortisol."
+        [Entry 2] "Lecture notes: Addison's disease — primary adrenal insufficiency. Causes: autoimmune (most common in UK), TB (most common worldwide), adrenal metastases. Features: fatigue, weight loss, hyperpigmentation, postural hypotension, hyponatraemia, hyperkalaemia."
+
+        Question: What are the investigations for Cushing's syndrome and what is the most common cause?
+  context:
+    vault_entries: 2
+    scenario: endocrine revision
+expected_must_contain:
+  - "iatrogenic"
+  - "dexamethasone suppression"
+  - "Entry 1"
+expected_must_not_contain:
+  - "Addison"
+  - "I don't have information"
+expected_structure: null
+notes: "Tests vault.qa retrieves Cushing's investigations from correct entry without mixing with Addison's."
