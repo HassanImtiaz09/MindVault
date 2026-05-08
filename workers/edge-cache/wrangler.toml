@@ -20,4 +20,4 @@ bucket_name = "docvault-cache"
 ENVIRONMENT = "production"
 
 # Custom domain (configure after first deploy)
-# routes = [{ pattern = "cdn.docvault.app/*", zone_name = "docvault.app" }]
+# routes = [{ pattern = "cdn.docvault.uk/*", zone_name = "docvault.uk" }]
