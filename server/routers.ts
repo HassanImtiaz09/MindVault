@@ -72,7 +72,12 @@ export const appRouter = router({
           const buffer = Buffer.from(input.fileBase64, "base64");
           const key = `memories/${ctx.user.id}/${Date.now()}-${input.fileName}`;
           const result = await storagePut(key, buffer, input.fileMimeType || "application/octet-stream");
-          if ("ok" in result && result.ok === false) {
+          if (result.ok) {
+            fileUrl = `r2://${key}`;
+          } else if (result.error === "STORAGE_NOT_CONFIGURED") {
+            // Graceful degradation: store without file in dev
+            console.warn("[memories.create] Storage not configured, skipping file upload");
+          } else {
             throw new TRPCError({ code: "BAD_REQUEST", message: result.reason });
           }
         }

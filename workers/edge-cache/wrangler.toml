@@ -1,0 +1,23 @@
+# DocVault Edge Cache Worker
+# Serves cached R2 objects at the edge with Cloudflare CDN.
+# Deployed via: cd workers/edge-cache && npx wrangler deploy
+
+name = "docvault-edge-cache"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+
+# R2 bucket bindings
+[[r2_buckets]]
+binding = "VAULT_BUCKET"
+bucket_name = "docvault-vault"
+
+[[r2_buckets]]
+binding = "CACHE_BUCKET"
+bucket_name = "docvault-cache"
+
+# Environment variables (set via wrangler secret or dashboard)
+[vars]
+ENVIRONMENT = "production"
+
+# Custom domain (configure after first deploy)
+# routes = [{ pattern = "cdn.docvault.uk/*", zone_name = "docvault.uk" }]
