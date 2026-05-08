@@ -103,6 +103,7 @@ export default function RootLayout() {
             <Stack.Screen name="export" options={{ presentation: "modal" }} />
             <Stack.Screen name="reminders" options={{ presentation: "modal" }} />
             <Stack.Screen name="collaborate" options={{ presentation: "modal" }} />
+            <Stack.Screen name="auth" options={{ gestureEnabled: false }} />
             <Stack.Screen name="oauth/callback" />
           </Stack>
           <StatusBar style="light" />

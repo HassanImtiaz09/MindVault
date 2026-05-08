@@ -29,6 +29,13 @@
       "when": 1778187248992,
       "tag": "0003_mighty_gabe_jones",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1778202049024,
+      "tag": "0004_common_magik",
+      "breakpoints": true
     }
   ]
 }

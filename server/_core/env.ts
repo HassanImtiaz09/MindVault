@@ -34,6 +34,13 @@ const envSchema = z.object({
   // M0.3 — Inngest (background jobs)
   INNGEST_EVENT_KEY: z.string().optional(),
   INNGEST_SIGNING_KEY: z.string().optional(),
+
+  // M0.4 — Better-Auth + Resend magic-link
+  BETTER_AUTH_SECRET: z.string().optional(),
+  RESEND_API_KEY: z.string().optional(),
+  AUTH_FROM_EMAIL: z.string().default("DocVault <noreply@docvault.uk>"),
+  WEB_APP_URL: z.string().default("http://localhost:8081"),
+  MARKETING_URL: z.string().default("http://localhost:3001"),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -79,6 +86,13 @@ export const ENV = {
   // Inngest
   inngestEventKey: raw.INNGEST_EVENT_KEY,
   inngestSigningKey: raw.INNGEST_SIGNING_KEY,
+
+  // Better-Auth + Resend
+  betterAuthSecret: raw.BETTER_AUTH_SECRET,
+  resendApiKey: raw.RESEND_API_KEY,
+  authFromEmail: raw.AUTH_FROM_EMAIL,
+  webAppUrl: raw.WEB_APP_URL,
+  marketingUrl: raw.MARKETING_URL,
 } as const;
 
 const optionalKeys = [
@@ -95,6 +109,8 @@ const optionalKeys = [
   "cfStreamCustomerSubdomain",
   "inngestEventKey",
   "inngestSigningKey",
+  "betterAuthSecret",
+  "resendApiKey",
 ] as const;
 
 for (const key of optionalKeys) {

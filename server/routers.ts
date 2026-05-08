@@ -8,6 +8,7 @@ import { modelRouter } from "./_core/model_router";
 import { transcribeAudio } from "./_core/voiceTranscription";
 import * as db from "./db";
 import { storagePut } from "./storage";
+import { sendMagicLink, verifyMagicLink } from "./_core/better_auth";
 
 function getContentString(content: string | Array<any> | undefined | null): string {
   if (!content) return "";
@@ -27,6 +28,30 @@ export const appRouter = router({
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
+    signInWithMagicLink: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ input }) => {
+        const result = await sendMagicLink(input.email);
+        if (!result.sent) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: result.error || "Failed to send magic link" });
+        }
+        return { sent: true };
+      }),
+    verifyMagicLink: publicProcedure
+      .input(z.object({ token: z.string().min(1) }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await verifyMagicLink(input.token);
+        if (!result.success || !result.jwtToken) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: result.error || "Verification failed" });
+        }
+        // Set the legacy JWT cookie (bridge) so native app keeps working
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, result.jwtToken, {
+          ...cookieOptions,
+          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        });
+        return { user: result.user, sessionId: result.sessionId };
+      }),
   }),
 
   memories: router({
