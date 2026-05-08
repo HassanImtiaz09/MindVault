@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 const faqs = [
   {
     q: "What is DocVault?",
-    a: "DocVault is an AI-powered memory assistant designed for medical students and healthcare professionals. It captures information from multiple sources (text, images, voice, PDFs, web links), automatically extracts and organises knowledge, and lets you recall it instantly using natural language queries.",
+    a: "DocVault is an AI study and coaching platform built by an NHS doctor for UK medical students and doctors. It combines a personal medical vault, adaptive study plans, AI-generated refresher videos, a voice OSCE simulator, and a doctor marketplace — everything you need to pass exams and stay sharp throughout your career.",
   },
   {
     q: "Is my data secure?",
@@ -28,7 +28,7 @@ const faqs = [
   },
   {
     q: "How does the Free plan differ from Pro?",
-    a: "The Free plan includes 50 memories per month, basic AI extraction, and 1 GB storage. Pro unlocks unlimited memories, advanced AI features (summaries, knowledge graph, natural language queries), weekly digests, and 25 GB storage. See our Pricing page for the full comparison.",
+    a: "The Free plan includes 30 saves per month, 1 Daily 5 quiz, 1 voice OSCE session per week, and 200 SBA preview questions (no mock exams). Pro Student (£8.99/month or £71/year, verified .ac.uk only) unlocks full UKMLA + PSA question banks, 6 mocks per year, 60 min/week OSCE practice, a daily study plan, and weekly progress reports. Pro Doctor (£17.99/month) adds postgraduate exam banks and 180 min/week OSCE. See our Pricing page for the full comparison.",
   },
   {
     q: "Can I export my data?",
@@ -36,7 +36,7 @@ const faqs = [
   },
   {
     q: "Is there a student discount?",
-    a: "We offer the Free tier specifically for students getting started. For medical schools wanting bulk Pro licences, contact us at sales@docvault.uk for educational pricing.",
+    a: "Yes — Pro Student is exclusively for verified UK medical students at £8.99/month (or £71/year, saving 34%). You must verify with a .ac.uk email address. For medical schools wanting institutional licences, contact us at sales@docvault.uk.",
   },
   {
     q: "How do I cancel my subscription?",
