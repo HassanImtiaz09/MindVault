@@ -153,9 +153,40 @@ describe("Eval Suite — Assertion Engine", () => {
 const hasApiKeys = !!(process.env.ANTHROPIC_API_KEY || process.env.GOOGLE_AI_KEY);
 
 describe.skipIf(!hasApiKeys)("Eval Suite — Live Model Invocation", () => {
-  // These tests actually call the model router. They are slow (30-60s each)
-  // and require API keys. In CI, they run only when secrets are available.
-  // The gate is: if any fixture that previously passed now fails, the PR is blocked.
+  it(
+    "live evals — full fixture suite",
+    async () => {
+      const { runFixture } = await import("./runner/run");
+      const fixtures = loadAllFixtures();
 
-  it.todo("Run all 30 fixtures against live model router (enable when CI secrets are configured)");
+      // Run in parallel batches of 5 for ~3 min total
+      const BATCH_SIZE = 5;
+      const results: Array<import("./runner/types").EvalResult> = [];
+
+      for (let i = 0; i < fixtures.length; i += BATCH_SIZE) {
+        const batch = fixtures.slice(i, i + BATCH_SIZE);
+        const batchResults = await Promise.all(batch.map((f) => runFixture(f)));
+        results.push(...batchResults);
+      }
+
+      // Report failures before asserting
+      const failed = results.filter((r) => !r.passed);
+      if (failed.length > 0) {
+        console.error(
+          `\n❌ ${failed.length}/${results.length} fixtures FAILED:\n` +
+            failed
+              .map(
+                (r) =>
+                  `  • ${r.fixtureId} (${r.job}, ${r.duration_ms}ms)\n` +
+                  r.failures.map((f) => `      → ${f}`).join("\n"),
+              )
+              .join("\n"),
+        );
+      }
+
+      // Gate: every fixture must pass
+      expect(failed).toHaveLength(0);
+    },
+    { timeout: 5 * 60 * 1000 }, // 5 minutes
+  );
 });
